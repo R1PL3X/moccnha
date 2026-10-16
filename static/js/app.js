@@ -23,6 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
   renderCart();
   updateAuthUI();
   setupEventListeners();
+  fetch('/api/db-status').then(r => r.json()).then(d => {
+    console.log(`%c[MOHO Database] %c${d.mode.toUpperCase()}%c - ${d.description}`, 'color:#a0673d;font-weight:bold', 'color:#10b981;font-weight:bold', 'color:#6b7280');
+  }).catch(() => {});
 });
 
 // --- THEME / DARK MODE ---

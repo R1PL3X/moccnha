@@ -1,41 +1,23 @@
 from flask import Flask, render_template, request, jsonify, session
-import sqlite3
-import json
 import random
 import string
 import os
-from database import get_db_connection, init_db
+
+# Load .env file automatically
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
+import db_adapter
+from database import init_db
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'moho-vietnam-default-secret-key-2026')
 
-# Ensure database is initialized
+# Ensure local fallback database schema is initialized
 init_db()
-
-def dict_from_row(row):
-    """Convert sqlite3.Row to standard dict and parse JSON fields"""
-    d = dict(row)
-    if 'gallery' in d and d['gallery']:
-        try:
-            d['gallery'] = json.loads(d['gallery'])
-        except Exception:
-            d['gallery'] = []
-    if 'colors' in d and d['colors']:
-        try:
-            d['colors'] = json.loads(d['colors'])
-        except Exception:
-            d['colors'] = []
-    if 'items' in d and d['items']:
-        try:
-            d['items'] = json.loads(d['items'])
-        except Exception:
-            d['items'] = []
-    if 'highlights' in d and d['highlights']:
-        try:
-            d['highlights'] = json.loads(d['highlights'])
-        except Exception:
-            d['highlights'] = []
-    return d
 
 # --- FRONTEND PAGES ---
 @app.route('/')
@@ -46,72 +28,42 @@ def home():
 def admin_page():
     return render_template('admin.html')
 
+# --- DATABASE STATUS ENDPOINT ---
+@app.route('/api/db-status', methods=['GET'])
+def get_db_status():
+    """Returns whether the system is connected to Supabase Cloud or Local SQLite"""
+    return jsonify(db_adapter.get_db_info())
+
 # --- API ENDPOINTS ---
 
 @app.route('/api/categories', methods=['GET'])
 def get_categories():
-    conn = get_db_connection()
-    categories = conn.execute('''
-        SELECT c.*, COUNT(p.id) as product_count 
-        FROM categories c
-        LEFT JOIN products p ON c.name = p.category
-        GROUP BY c.id
-    ''').fetchall()
-    conn.close()
-    return jsonify([dict(c) for c in categories])
+    categories = db_adapter.get_categories()
+    return jsonify(categories)
 
 @app.route('/api/products', methods=['GET'])
 def get_products():
-    conn = get_db_connection()
     category = request.args.get('category')
     search = request.args.get('search')
     bestseller = request.args.get('bestseller')
     promo = request.args.get('promo')
     sort = request.args.get('sort', 'default')
 
-    query = 'SELECT * FROM products WHERE 1=1'
-    params = []
-
-    if category and category.lower() != 'all':
-        query += ' AND category = ?'
-        params.append(category)
-
-    if search:
-        query += ' AND (title LIKE ? OR description LIKE ? OR collection LIKE ?)'
-        search_pattern = f'%{search}%'
-        params.extend([search_pattern, search_pattern, search_pattern])
-
-    if bestseller == '1':
-        query += ' AND is_bestseller = 1'
-
-    if promo == '1':
-        query += ' AND is_promo = 1'
-
-    if sort == 'price_asc':
-        query += ' ORDER BY price ASC'
-    elif sort == 'price_desc':
-        query += ' ORDER BY price DESC'
-    elif sort == 'sold':
-        query += ' ORDER BY sold_count DESC'
-    elif sort == 'discount':
-        query += ' ORDER BY discount_percent DESC'
-    else:
-        query += ' ORDER BY id ASC'
-
-    rows = conn.execute(query, params).fetchall()
-    conn.close()
-
-    products = [dict_from_row(row) for row in rows]
+    products = db_adapter.get_products(
+        category=category,
+        search=search,
+        bestseller=bestseller,
+        promo=promo,
+        sort=sort
+    )
     return jsonify(products)
 
 @app.route('/api/products/<int:product_id>', methods=['GET'])
 def get_product(product_id):
-    conn = get_db_connection()
-    row = conn.execute('SELECT * FROM products WHERE id = ?', (product_id,)).fetchone()
-    conn.close()
-    if row is None:
+    product = db_adapter.get_product_by_id(product_id)
+    if product is None:
         return jsonify({'error': 'Không tìm thấy sản phẩm'}), 404
-    return jsonify(dict_from_row(row))
+    return jsonify(product)
 
 @app.route('/api/products', methods=['POST'])
 def create_product():
@@ -119,45 +71,23 @@ def create_product():
     title = data.get('title')
     category = data.get('category')
     price = data.get('price')
-    original_price = data.get('original_price', price)
-    discount_percent = data.get('discount_percent', 0)
-    image = data.get('image', 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800')
-    collection = data.get('collection', 'MOHO')
-    description = data.get('description', '')
-    material = data.get('material', 'Gỗ tự nhiên')
-    dimensions = data.get('dimensions', 'Tiêu chuẩn')
-    colors = json.dumps(data.get('colors', [{"name": "Mặc định", "hex": "#e3c299"}]))
-    gallery = json.dumps(data.get('gallery', [image]))
-    is_bestseller = 1 if data.get('is_bestseller') else 0
-    is_promo = 1 if data.get('is_promo') else 0
 
     if not title or not category or price is None:
         return jsonify({'error': 'Vui lòng điền đủ tên, danh mục và giá sản phẩm'}), 400
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        INSERT INTO products (
-            title, category, collection, price, original_price, discount_percent,
-            image, gallery, colors, is_bestseller, is_promo, description, material, dimensions
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (
-        title, category, collection, price, original_price, discount_percent,
-        image, gallery, colors, is_bestseller, is_promo, description, material, dimensions
-    ))
-    conn.commit()
-    new_id = cursor.lastrowid
-    conn.close()
-
-    return jsonify({'success': True, 'id': new_id, 'message': 'Thêm sản phẩm thành công'}), 201
+    try:
+        new_id = db_adapter.create_product(data)
+        return jsonify({'success': True, 'id': new_id, 'message': 'Thêm sản phẩm thành công'}), 201
+    except Exception as e:
+        return jsonify({'error': f'Lỗi khi thêm sản phẩm: {str(e)}'}), 500
 
 @app.route('/api/products/<int:product_id>', methods=['DELETE'])
 def delete_product(product_id):
-    conn = get_db_connection()
-    conn.execute('DELETE FROM products WHERE id = ?', (product_id,))
-    conn.commit()
-    conn.close()
-    return jsonify({'success': True, 'message': 'Đã xóa sản phẩm thành công'})
+    try:
+        db_adapter.delete_product(product_id)
+        return jsonify({'success': True, 'message': 'Đã xóa sản phẩm thành công'})
+    except Exception as e:
+        return jsonify({'error': f'Lỗi khi xóa sản phẩm: {str(e)}'}), 500
 
 @app.route('/api/orders', methods=['POST'])
 def create_order():
@@ -172,6 +102,7 @@ def create_order():
     items = data.get('items', [])
     total_amount = data.get('total_amount', 0)
 
+    # Strictly require login before ordering
     if not user_id:
         return jsonify({'error': 'Quý khách vui lòng đăng nhập tài khoản trước khi đặt hàng'}), 401
 
@@ -182,39 +113,37 @@ def create_order():
     code_suffix = ''.join(random.choices(string.digits, k=5))
     order_code = f"MOHO-{code_suffix}"
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        INSERT INTO orders (
-            user_id, order_code, customer_name, customer_phone, customer_email,
-            customer_address, payment_method, note, items, total_amount, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
-    ''', (
-        user_id, order_code, customer_name, customer_phone, customer_email,
-        customer_address, payment_method, note, json.dumps(items), total_amount
-    ))
-    conn.commit()
-    conn.close()
-
-    return jsonify({
-        'success': True,
+    order_payload = {
+        'user_id': user_id,
         'order_code': order_code,
-        'message': 'Đặt hàng thành công! Đội ngũ MOHO sẽ liên hệ xác nhận đơn hàng trong 15 phút.'
-    }), 201
+        'customer_name': customer_name,
+        'customer_phone': customer_phone,
+        'customer_email': customer_email,
+        'customer_address': customer_address,
+        'payment_method': payment_method,
+        'note': note,
+        'items': items,
+        'total_amount': total_amount
+    }
+
+    try:
+        db_adapter.create_order(order_payload)
+        return jsonify({
+            'success': True,
+            'order_code': order_code,
+            'message': 'Đặt hàng thành công! Đội ngũ MOHO sẽ liên hệ xác nhận đơn hàng trong 15 phút.'
+        }), 201
+    except Exception as e:
+        return jsonify({'error': f'Lỗi đặt hàng: {str(e)}'}), 500
 
 @app.route('/api/user/<int:user_id>/orders', methods=['GET'])
 def get_user_orders(user_id):
-    conn = get_db_connection()
-    rows = conn.execute('SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC', (user_id,)).fetchall()
-    conn.close()
-    return jsonify([dict_from_row(row) for row in rows])
+    orders = db_adapter.get_user_orders(user_id)
+    return jsonify(orders)
 
 @app.route('/api/orders', methods=['GET'])
 def get_orders():
-    conn = get_db_connection()
-    rows = conn.execute('SELECT * FROM orders ORDER BY created_at DESC').fetchall()
-    conn.close()
-    orders = [dict_from_row(row) for row in rows]
+    orders = db_adapter.get_orders()
     return jsonify(orders)
 
 @app.route('/api/orders/<string:order_code>/status', methods=['PATCH'])
@@ -224,24 +153,16 @@ def update_order_status(order_code):
     if not new_status:
         return jsonify({'error': 'Thiếu trạng thái mới'}), 400
 
-    conn = get_db_connection()
-    conn.execute('UPDATE orders SET status = ? WHERE order_code = ?', (new_status, order_code))
-    conn.commit()
-    conn.close()
-    return jsonify({'success': True, 'message': 'Cập nhật trạng thái thành công'})
+    try:
+        db_adapter.update_order_status(order_code, new_status)
+        return jsonify({'success': True, 'message': 'Cập nhật trạng thái thành công'})
+    except Exception as e:
+        return jsonify({'error': f'Lỗi cập nhật trạng thái: {str(e)}'}), 500
 
 @app.route('/api/stats', methods=['GET'])
 def get_stats():
-    conn = get_db_connection()
-    total_products = conn.execute('SELECT COUNT(*) FROM products').fetchone()[0]
-    total_orders = conn.execute('SELECT COUNT(*) FROM orders').fetchone()[0]
-    total_revenue = conn.execute('SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE status != "cancelled"').fetchone()[0]
-    conn.close()
-    return jsonify({
-        'total_products': total_products,
-        'total_orders': total_orders,
-        'total_revenue': total_revenue
-    })
+    stats = db_adapter.get_stats()
+    return jsonify(stats)
 
 # --- AUTH ENDPOINTS ---
 @app.route('/api/auth/register', methods=['POST'])
@@ -255,24 +176,15 @@ def register():
     if not fullname or not email or not password:
         return jsonify({'error': 'Vui lòng điền đầy đủ họ tên, email và mật khẩu'}), 400
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute(
-            'INSERT INTO users (fullname, email, phone, password, role) VALUES (?, ?, ?, ?, "customer")',
-            (fullname, email, phone, password)
-        )
-        conn.commit()
-        user_id = cursor.lastrowid
-        conn.close()
-        return jsonify({
-            'success': True,
-            'user': {'id': user_id, 'fullname': fullname, 'email': email, 'phone': phone, 'role': 'customer'},
-            'message': 'Đăng ký tài khoản thành công!'
-        })
-    except sqlite3.IntegrityError:
-        conn.close()
-        return jsonify({'error': 'Email này đã được sử dụng. Vui lòng đăng nhập'}), 400
+    result = db_adapter.register_user(fullname, email, phone, password)
+    if 'error' in result:
+        return jsonify(result), 400
+
+    return jsonify({
+        'success': True,
+        'user': result['user'],
+        'message': 'Đăng ký tài khoản thành công!'
+    })
 
 @app.route('/api/auth/login', methods=['POST'])
 def login():
@@ -283,20 +195,11 @@ def login():
     if not email or not password:
         return jsonify({'error': 'Vui lòng nhập email và mật khẩu'}), 400
 
-    conn = get_db_connection()
-    user = conn.execute('SELECT * FROM users WHERE email = ? AND password = ?', (email, password)).fetchone()
-    conn.close()
-
+    user = db_adapter.authenticate_user(email, password)
     if user:
         return jsonify({
             'success': True,
-            'user': {
-                'id': user['id'],
-                'fullname': user['fullname'],
-                'email': user['email'],
-                'phone': user['phone'],
-                'role': user['role']
-            },
+            'user': user,
             'message': f'Xin chào, {user["fullname"]}!'
         })
     else:

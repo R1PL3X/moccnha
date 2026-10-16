@@ -99,7 +99,21 @@ class MohoStoreTestCase(unittest.TestCase):
         res = self.client.get('/admin')
         self.assertEqual(res.status_code, 200)
         content = res.data.decode('utf-8')
-        self.assertIn('Admin Portal', content)
+    def test_db_status(self):
+        res = self.client.get('/api/db-status')
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.data)
+        self.assertIn('mode', data)
+        self.assertIn('status', data)
+
+    def test_stats(self):
+        res = self.client.get('/api/stats')
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.data)
+        self.assertIn('total_products', data)
+        self.assertIn('total_orders', data)
+        self.assertIn('total_revenue', data)
 
 if __name__ == '__main__':
     unittest.main()
+

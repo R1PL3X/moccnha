@@ -6,6 +6,7 @@ let ADMIN_THEME = localStorage.getItem('moho_theme') || 'light';
 
 document.addEventListener('DOMContentLoaded', () => {
   initAdminTheme();
+  loadDbStatus();
   loadAdminStats();
   loadAdminOrders();
   loadAdminProducts();
@@ -288,3 +289,33 @@ function showAdminToast(message, type = 'info') {
     setTimeout(() => toast.remove(), 300);
   }, 3000);
 }
+
+async function loadDbStatus() {
+  const pill = document.getElementById('db-status-pill');
+  if (!pill) return;
+
+  try {
+    const res = await fetch('/api/db-status');
+    const data = await res.json();
+    pill.classList.remove('hidden');
+
+    if (data.mode === 'supabase') {
+      pill.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700';
+      pill.innerHTML = `
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span>Supabase Cloud (Đồng bộ)</span>
+      `;
+      pill.title = data.description + ` (${data.url})`;
+    } else {
+      pill.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-zinc-800 dark:text-amber-300 border border-amber-300 dark:border-zinc-700';
+      pill.innerHTML = `
+        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+        <span>SQLite Nội bộ</span>
+      `;
+      pill.title = data.description + ' - Điền SUPABASE_URL trong .env để đồng bộ đa máy';
+    }
+  } catch (e) {
+    console.warn('Could not check db status:', e);
+  }
+}
+
