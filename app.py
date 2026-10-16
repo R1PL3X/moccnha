@@ -13,11 +13,22 @@ except ImportError:
 import db_adapter
 from database import init_db
 
-app = Flask(__name__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+static_dir = os.path.join(BASE_DIR, 'public', 'static') if os.path.exists(os.path.join(BASE_DIR, 'public', 'static')) else os.path.join(BASE_DIR, 'static')
+
+app = Flask(
+    __name__,
+    template_folder=os.path.join(BASE_DIR, 'templates'),
+    static_folder=static_dir,
+    static_url_path='/static'
+)
 app.secret_key = os.environ.get('SECRET_KEY', 'moho-vietnam-default-secret-key-2026')
 
-# Ensure local fallback database schema is initialized
-init_db()
+# Ensure local fallback database schema is initialized safely
+try:
+    init_db()
+except Exception:
+    pass
 
 # --- FRONTEND PAGES ---
 @app.route('/')
