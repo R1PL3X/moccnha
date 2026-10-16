@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Database (Bảo vệ dữ liệu nội bộ & thông tin khách hàng)
+*.db
+*.sqlite
+*.sqlite3
+moho_store.db
+
+# Environment variables & Secrets
+.env
+.env.local
+*.env
+
+# Logs
+*.log
+logs/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Temporary test artifacts
+.pytest_cache/
+.coverage
+htmlcov/

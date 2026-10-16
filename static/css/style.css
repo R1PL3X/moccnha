@@ -1,0 +1,217 @@
+/* Custom CSS for MOHO Style Website with Dark Mode Support */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap');
+
+:root {
+  --primary-wood: #a0673d;
+  --primary-wood-hover: #86522c;
+  --terracotta: #c85a32;
+  --accent-red: #eb2f2f;
+  --bg-main: #ffffff;
+  --bg-card: #f9f9f9;
+  --border-color: #ebebeb;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --header-bg: #ffffff;
+  --footer-bg: #1c1c1c;
+}
+
+.dark {
+  --primary-wood: #c98553;
+  --primary-wood-hover: #dd9e6d;
+  --terracotta: #e06d43;
+  --accent-red: #ff4d4f;
+  --bg-main: #121214;
+  --bg-card: #1c1c20;
+  --border-color: #2e2e34;
+  --text-primary: #f3f4f6;
+  --text-secondary: #9ca3af;
+  --header-bg: #16161a;
+  --footer-bg: #0c0c0e;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+}
+
+.font-serif-title {
+  font-family: 'Playfair Display', serif;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #374151;
+}
+
+/* Glassmorphism & Smooth Transitions */
+.header-sticky {
+  transition: all 0.25s ease;
+}
+.header-sticky.scrolled {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.08);
+}
+.dark .header-sticky.scrolled {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+}
+
+/* Discount Badge Tag */
+.discount-badge {
+  background-color: #e53935;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 2px;
+  display: inline-block;
+  letter-spacing: 0.3px;
+}
+
+/* Product Card Styling */
+.product-card {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.08);
+}
+.dark .product-card:hover {
+  box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.45);
+}
+
+.product-img-wrapper {
+  overflow: hidden;
+  position: relative;
+  aspect-ratio: 1 / 1;
+}
+
+.product-img-wrapper img {
+  transition: transform 0.4s ease;
+}
+
+.product-card:hover .product-img-wrapper img {
+  transform: scale(1.05);
+}
+
+.product-overlay-actions {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  transform: translateY(10px);
+}
+
+.product-card:hover .product-overlay-actions {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+/* Color swatch dot */
+.color-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: inline-block;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 1px #cbd5e1;
+  transition: transform 0.15s ease;
+}
+.dark .color-dot {
+  border-color: #1e1e24;
+  box-shadow: 0 0 0 1px #475569;
+}
+.color-dot:hover, .color-dot.active {
+  transform: scale(1.25);
+}
+
+/* Floating Action Circle Buttons */
+.fab-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  color: white;
+}
+.fab-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.fab-phone {
+  background-color: #22c55e;
+}
+.fab-zalo {
+  background-color: #0068ff;
+}
+.fab-messenger {
+  background-color: #0084ff;
+}
+.fab-scrolltop {
+  background-color: #059669;
+}
+
+/* Price typography */
+.sale-price {
+  color: #dc2626;
+  font-weight: 700;
+  font-size: 15px;
+}
+.dark .sale-price {
+  color: #f87171;
+}
+
+.old-price {
+  color: #9ca3af;
+  text-decoration: line-through;
+  font-size: 13px;
+}
+
+/* Cart Drawer */
+.cart-drawer-backdrop {
+  backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.5);
+  transition: opacity 0.3s ease;
+}
+
+.cart-drawer-panel {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Custom modal transitions */
+.modal-enter {
+  opacity: 0;
+  transform: scale(0.96);
+}
+.modal-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Pulse animation for hot badges */
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+.pulse-tag {
+  animation: pulse-subtle 2s infinite ease-in-out;
+}
