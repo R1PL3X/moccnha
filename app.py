@@ -39,6 +39,17 @@ def home():
 def admin_page():
     return render_template('admin.html')
 
+@app.errorhandler(404)
+def not_found(e):
+    return jsonify({
+        'error': '404 Not Found',
+        'path': request.path,
+        'full_path': request.full_path,
+        'path_info': request.environ.get('PATH_INFO'),
+        'query_string': request.environ.get('QUERY_STRING'),
+        'x_matched_path': request.headers.get('x-matched-path')
+    }), 404
+
 # --- DATABASE STATUS ENDPOINT ---
 @app.route('/api/db-status', methods=['GET'])
 def get_db_status():
