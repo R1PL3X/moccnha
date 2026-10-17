@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="vi" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Về Chúng Tôi - moccnha | Nội Thất Gỗ Tự Nhiên Hiện Đại</title>
+  <meta name="description" content="Câu chuyện thương hiệu moccnha - Thương hiệu nội thất gỗ tự nhiên tối giản, bền bỉ và chuẩn an toàn xuất khẩu cho gia đình Việt.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            moho: {
+              wood: '#a0673d',
+              'wood-dark': '#86522c',
+              terracotta: '#c85a32',
+              red: '#e53935'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪵</text></svg>">
+</head>
+<body class="bg-white dark:bg-zinc-950 text-gray-800 dark:text-zinc-100 transition-colors duration-300">
+
+  <!-- TOP ANNOUNCEMENT BAR -->
+  <div class="bg-zinc-900 text-zinc-300 dark:bg-black dark:text-zinc-400 text-xs py-1.5 px-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="hidden sm:flex items-center gap-4">
+        <span>🚚 Miễn phí giao hàng & lắp đặt tại TP.HCM & Hà Nội (Đơn từ 2 triệu)</span>
+        <span class="text-zinc-600">|</span>
+        <span>🛡️ Bảo hành 2 năm & Bảo trì trọn đời</span>
+      </div>
+      <div class="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-4">
+        <a href="tel:0971141140" class="hover:text-amber-400 transition">Hotline: <strong>097 114 1140</strong></a>
+        <span class="text-zinc-600">|</span>
+        <a href="/admin" class="hover:text-amber-400 transition text-[11px] bg-zinc-800 px-2 py-0.5 rounded">Trang Admin Quản Trị</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN HEADER -->
+  <header class="header-sticky sticky top-0 z-40 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-gray-100 dark:border-zinc-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
+      <a href="/" class="flex items-baseline select-none">
+        <span class="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white">moccnha</span>
+        <span class="text-3xl sm:text-4xl font-black text-amber-600 leading-none">.</span>
+      </a>
+
+      <!-- Center Nav Links -->
+      <nav class="hidden md:flex items-center gap-7 text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-zinc-300">
+        <a href="/" class="hover:text-amber-800 dark:hover:text-amber-400 transition">Sản phẩm</a>
+        <a href="/#promoSection" class="text-red-600 dark:text-red-400 hover:text-red-700 transition">Khuyến mãi</a>
+        <a href="/#bestsellerSection" class="hover:text-amber-800 dark:hover:text-amber-400 transition">Bán chạy</a>
+        <a href="/b2b" class="hover:text-amber-800 dark:hover:text-amber-400 transition">Nội thất giá sỉ</a>
+        <a href="/news" class="hover:text-amber-800 dark:hover:text-amber-400 transition">Tin tức</a>
+        <a href="/about" class="text-amber-800 dark:text-amber-400 font-bold border-b-2 border-amber-800 dark:border-amber-400 pb-1">Về moccnha</a>
+        <a href="/stores" class="hover:text-amber-800 dark:hover:text-amber-400 transition">Cửa hàng</a>
+      </nav>
+
+      <!-- Right Header Actions -->
+      <div class="flex items-center gap-4">
+        <button 
+          type="button" 
+          onclick="toggleTheme()" 
+          class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-600 dark:text-yellow-400 transition" 
+          title="Đổi giao diện Dark Mode"
+        >
+          <svg class="sun-icon w-5 h-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg class="moon-icon w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+
+        <a href="/" class="text-xs font-semibold px-4 py-2 bg-amber-800 hover:bg-amber-900 text-white rounded transition shadow-sm">
+          Mua Sắm Ngay &rarr;
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO SECTION -->
+  <section class="relative py-20 bg-gradient-to-b from-amber-50/60 to-white dark:from-zinc-900 dark:to-zinc-950 border-b border-gray-100 dark:border-zinc-800">
+    <div class="max-w-5xl mx-auto px-4 text-center">
+      <span class="inline-block text-amber-800 dark:text-amber-400 font-bold uppercase tracking-widest text-xs mb-3 px-3 py-1 bg-amber-100 dark:bg-zinc-800 rounded-full">
+        Câu chuyện thương hiệu
+      </span>
+      <h1 class="text-3xl sm:text-5xl font-extrabold text-gray-900 dark:text-white leading-tight mb-6">
+        Kiến Tạo Không Gian Sống Ấm Cúng <br class="hidden sm:inline" />
+        <span class="text-amber-800 dark:text-amber-500">Từ Tinh Hoa Gỗ Tự Nhiên</span>
+      </h1>
+      <p class="text-sm sm:text-base text-gray-600 dark:text-zinc-300 max-w-3xl mx-auto leading-relaxed">
+        <strong>moccnha</strong> (Mộc Của Nhà) ra đời từ niềm đam mê chế tác mộc mạc và mong muốn đem đến cho gia đình Việt những món đồ nội thất gỗ tự nhiên chất lượng quốc tế, an toàn cho sức khỏe và bền đẹp qua nhiều thế hệ.
+      </p>
+    </div>
+  </section>
+
+  <!-- STORY & PHILOSOPHY -->
+  <section class="py-16 max-w-7xl mx-auto px-4 sm:px-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-6">
+          Triết lý thiết kế: Tối Giản, Tiện Nghi & An Lành
+        </h2>
+        <div class="space-y-4 text-sm text-gray-600 dark:text-zinc-300 leading-relaxed">
+          <p>
+            Tại <strong>moccnha</strong>, chúng tôi tin rằng ngôi nhà không chỉ là nơi che mưa che nắng, mà là chốn bình yên nhất để bạn trở về sau những bộn bề cuộc sống. Mỗi chiếc giường ngủ HOBRO, từng chiếc bàn ăn VLINE hay tủ đầu giường đều được chăm chút từ tỷ lệ bo tròn góc cạnh đến vân gỗ đối xứng tự nhiên.
+          </p>
+          <p>
+            Chúng tôi loại bỏ các chi tiết rườm rà, tập trung vào công năng sử dụng thực tế và vẻ đẹp mộc mạc nguyên bản của gỗ sồi tự nhiên, gỗ cao su tẩm sấy công nghệ cao và veneer tràm ghép hình học 3D độc quyền.
+          </p>
+          <p>
+            Đặc biệt, 100% bề mặt gỗ được hoàn thiện bằng hệ sơn gốc nước không mùi, đạt tiêu chuẩn khắt khe CARB-P2 về nồng độ khí thải Formaldehyde – tuyệt đối thân thiện và an toàn cho trẻ sơ sinh và người lớn tuổi.
+          </p>
+        </div>
+
+        <div class="mt-8 grid grid-cols-3 gap-4 border-t border-gray-100 dark:border-zinc-800 pt-6 text-center">
+          <div>
+            <div class="text-2xl sm:text-3xl font-extrabold text-amber-800 dark:text-amber-500">50K+</div>
+            <div class="text-xs text-gray-500 dark:text-zinc-400 mt-1">Gia đình tin dùng</div>
+          </div>
+          <div>
+            <div class="text-2xl sm:text-3xl font-extrabold text-amber-800 dark:text-amber-500">100%</div>
+            <div class="text-xs text-gray-500 dark:text-zinc-400 mt-1">Gỗ nguồn gốc hợp pháp</div>
+          </div>
+          <div>
+            <div class="text-2xl sm:text-3xl font-extrabold text-amber-800 dark:text-amber-500">2 Năm</div>
+            <div class="text-xs text-gray-500 dark:text-zinc-400 mt-1">Bảo hành chính hãng</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="relative">
+        <img 
+          src="https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?q=80&w=1200&auto=format&fit=crop" 
+          alt="Không gian nội thất moccnha" 
+          class="rounded-2xl shadow-xl w-full object-cover aspect-[4/3]"
+        />
+        <div class="absolute -bottom-6 -left-6 bg-white dark:bg-zinc-800 p-4 sm:p-6 rounded-xl shadow-lg border border-gray-100 dark:border-zinc-700 hidden sm:block max-w-xs">
+          <div class="flex items-center gap-3">
+            <span class="text-3xl">🪵</span>
+            <div>
+              <h4 class="font-bold text-sm text-gray-900 dark:text-white">Gỗ Tự Nhiên Thật</h4>
+              <p class="text-xs text-gray-500 dark:text-zinc-400">Được kiểm định chất lượng nghiêm ngặt trước khi xuất xưởng</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 CORE VALUES -->
+  <section class="py-16 bg-gray-50 dark:bg-zinc-900/60 border-y border-gray-100 dark:border-zinc-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+      <div class="text-center max-w-2xl mx-auto mb-12">
+        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-3">
+          4 Cam Kết Vàng Của moccnha
+        </h2>
+        <p class="text-xs sm:text-sm text-gray-500 dark:text-zinc-400">
+          Chất lượng không chỉ thể hiện qua lời nói, mà qua từng sản phẩm trao tận tay bạn.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Value 1 -->
+        <div class="bg-white dark:bg-zinc-800 p-6 rounded-xl border border-gray-100 dark:border-zinc-700 shadow-sm hover:shadow-md transition">
+          <div class="w-12 h-12 rounded-lg bg-amber-100 dark:bg-zinc-700 text-amber-800 dark:text-amber-400 flex items-center justify-center text-2xl mb-4">
+            🌲
+          </div>
+          <h3 class="font-bold text-base text-gray-900 dark:text-white mb-2">Gỗ Tự Nhiên Chuẩn Quốc Tế</h3>
+          <p class="text-xs text-gray-600 dark:text-zinc-300 leading-relaxed">
+            Quy trình tẩm sấy chân không khép kín giúp chống co ngót, kháng nứt nẻ và ngăn chặn mối mọt tuyệt đối.
+          </p>
+        </div>
+
+        <!-- Value 2 -->
+        <div class="bg-white dark:bg-zinc-800 p-6 rounded-xl border border-gray-100 dark:border-zinc-700 shadow-sm hover:shadow-md transition">
+          <div class="w-12 h-12 rounded-lg bg-emerald-100 dark:bg-zinc-700 text-emerald-800 dark:text-emerald-400 flex items-center justify-center text-2xl mb-4">
+            🌿
+          </div>
+          <h3 class="font-bold text-base text-gray-900 dark:text-white mb-2">An Toàn Cho Sức Khỏe</h3>
+          <p class="text-xs text-gray-600 dark:text-zinc-300 leading-relaxed">
+            Đạt chứng nhận CARB-P2 và tiêu chuẩn xuất khẩu Nhật Bản, Châu Âu về không phát thải độc hại trong không gian kín.
+          </p>
+        </div>
+
+        <!-- Value 3 -->
+        <div class="bg-white dark:bg-zinc-800 p-6 rounded-xl border border-gray-100 dark:border-zinc-700 shadow-sm hover:shadow-md transition">
+          <div class="w-12 h-12 rounded-lg bg-blue-100 dark:bg-zinc-700 text-blue-800 dark:text-blue-400 flex items-center justify-center text-2xl mb-4">
+            🏷️
+          </div>
+          <h3 class="font-bold text-base text-gray-900 dark:text-white mb-2">Giá Trị Tận Xưởng (D2C)</h3>
+          <p class="text-xs text-gray-600 dark:text-zinc-300 leading-relaxed">
+            Mô hình trực tiếp từ nhà máy đến người tiêu dùng, loại bỏ chi phí mặt bằng trung gian, tiết kiệm tới 35% chi phí.
+          </p>
+        </div>
+
+        <!-- Value 4 -->
+        <div class="bg-white dark:bg-zinc-800 p-6 rounded-xl border border-gray-100 dark:border-zinc-700 shadow-sm hover:shadow-md transition">
+          <div class="w-12 h-12 rounded-lg bg-rose-100 dark:bg-zinc-700 text-rose-800 dark:text-rose-400 flex items-center justify-center text-2xl mb-4">
+            🛠️
+          </div>
+          <h3 class="font-bold text-base text-gray-900 dark:text-white mb-2">Bảo Hành 2 Năm & Bảo Trì</h3>
+          <p class="text-xs text-gray-600 dark:text-zinc-300 leading-relaxed">
+            Đội ngũ kỹ thuật viên lành nghề luôn sẵn sàng hỗ trợ bảo hành tận nơi nhanh chóng trong vòng 24 - 48 giờ.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA FOOTER SECTION -->
+  <section class="py-16 text-center max-w-4xl mx-auto px-4">
+    <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4">
+      Sẵn sàng làm mới tổ ấm của bạn cùng moccnha?
+    </h2>
+    <p class="text-xs sm:text-sm text-gray-500 dark:text-zinc-400 mb-8 max-w-xl mx-auto">
+      Khám phá hơn 100+ mẫu sản phẩm nội thất gỗ cao cấp cho phòng khách, phòng ngủ và phòng ăn với ưu đãi đặc biệt hôm nay.
+    </p>
+    <div class="flex flex-wrap items-center justify-center gap-4">
+      <a href="/" class="px-6 py-3 bg-amber-800 hover:bg-amber-900 text-white text-xs font-bold uppercase tracking-wider rounded-lg shadow-md transition">
+        Xem toàn bộ sản phẩm
+      </a>
+      <a href="/stores" class="px-6 py-3 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-800 dark:text-zinc-200 text-xs font-bold uppercase tracking-wider rounded-lg transition">
+        Tìm showroom gần bạn
+      </a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="bg-zinc-900 text-zinc-300 dark:bg-black dark:text-zinc-400 text-xs border-t border-zinc-800 py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div>
+        <a href="/" class="flex items-baseline select-none mb-3">
+          <span class="text-2xl font-black text-white">moccnha</span>
+          <span class="text-2xl font-black text-amber-500">.</span>
+        </a>
+        <p class="text-zinc-400 leading-relaxed mb-4">
+          Nội thất gỗ tự nhiên hiện đại chuẩn quốc tế. Tinh giản chi phí, nâng tầm chất lượng sống cho ngôi nhà bạn.
+        </p>
+        <p class="text-zinc-400 font-semibold">Hotline: 097 114 1140</p>
+      </div>
+
+      <div>
+        <h4 class="text-white font-bold uppercase tracking-wider mb-4 text-xs">Về Chúng Tôi</h4>
+        <ul class="space-y-2 text-zinc-400">
+          <li><a href="/about" class="hover:text-amber-400 transition">Câu chuyện moccnha</a></li>
+          <li><a href="/stores" class="hover:text-amber-400 transition">Hệ thống showroom</a></li>
+          <li><a href="/news" class="hover:text-amber-400 transition">Tin tức & Cẩm nang</a></li>
+          <li><a href="/b2b" class="hover:text-amber-400 transition">Hợp tác dự án & Giá sỉ</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="text-white font-bold uppercase tracking-wider mb-4 text-xs">Chính Sách & Hỗ Trợ</h4>
+        <ul class="space-y-2 text-zinc-400">
+          <li><a href="/policy#warranty" class="hover:text-amber-400 transition">Chính sách bảo hành 2 năm</a></li>
+          <li><a href="/policy#return" class="hover:text-amber-400 transition">Chính sách đổi trả 1-1</a></li>
+          <li><a href="/policy#shipping" class="hover:text-amber-400 transition">Giao hàng & Lắp đặt</a></li>
+          <li><a href="/policy#payment" class="hover:text-amber-400 transition">Hướng dẫn thanh toán</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="text-white font-bold uppercase tracking-wider mb-4 text-xs">Hệ Thống Showroom</h4>
+        <p class="text-zinc-400 mb-2">📍 <strong>TP.HCM:</strong> 162 Nguyễn Thị Thập, Q.7</p>
+        <p class="text-zinc-400 mb-2">📍 <strong>Hà Nội:</strong> 21 Lê Đức Thọ, Nam Từ Liêm</p>
+        <p class="text-zinc-400">🕒 Mở cửa: 08:30 - 21:00 (Tất cả các ngày)</p>
+      </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 border-t border-zinc-800 mt-8 pt-6 text-center text-zinc-500">
+      &copy; 2026 moccnha. Tất cả các quyền được bảo lưu.
+    </div>
+  </footer>
+
+  <script>
+    // Theme toggle logic
+    let THEME = localStorage.getItem('moho_theme') || 'light';
+    if (THEME === 'dark') document.documentElement.classList.add('dark');
+    updateThemeIcons();
+
+    function toggleTheme() {
+      if (document.documentElement.classList.contains('dark')) {
+        document.documentElement.classList.remove('dark');
+        THEME = 'light';
+      } else {
+        document.documentElement.classList.add('dark');
+        THEME = 'dark';
+      }
+      localStorage.setItem('moho_theme', THEME);
+      updateThemeIcons();
+    }
+
+    function updateThemeIcons() {
+      const sun = document.querySelector('.sun-icon');
+      const moon = document.querySelector('.moon-icon');
+      if (THEME === 'dark') {
+        sun?.classList.remove('hidden');
+        moon?.classList.add('hidden');
+      } else {
+        sun?.classList.add('hidden');
+        moon?.classList.remove('hidden');
+      }
+    }
+  </script>
+</body>
+</html>

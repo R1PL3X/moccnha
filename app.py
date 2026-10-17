@@ -78,6 +78,31 @@ except Exception:
 def home():
     return render_template('index.html')
 
+@app.route('/about')
+@app.route('/ve-moccnha')
+def about_page():
+    return render_template('about.html')
+
+@app.route('/stores')
+@app.route('/cua-hang')
+def stores_page():
+    return render_template('stores.html')
+
+@app.route('/news')
+@app.route('/tin-tuc')
+def news_page():
+    return render_template('news.html')
+
+@app.route('/b2b')
+@app.route('/noi-that-gia-si')
+def b2b_page():
+    return render_template('b2b.html')
+
+@app.route('/policy')
+@app.route('/chinh-sach')
+def policy_page():
+    return render_template('policy.html')
+
 @app.route('/admin')
 def admin_page():
     return render_template('admin.html')
@@ -168,9 +193,9 @@ def create_order():
     if not customer_name or not customer_phone or not customer_address or not items:
         return jsonify({'error': 'Vui lòng cung cấp đầy đủ thông tin giao hàng và giỏ hàng'}), 400
 
-    # Generate unique order code e.g. MOHO-94827
+    # Generate unique order code e.g. MOC-94827
     code_suffix = ''.join(random.choices(string.digits, k=5))
-    order_code = f"MOHO-{code_suffix}"
+    order_code = f"MOC-{code_suffix}"
 
     order_payload = {
         'user_id': user_id,
@@ -190,7 +215,7 @@ def create_order():
         return jsonify({
             'success': True,
             'order_code': order_code,
-            'message': 'Đặt hàng thành công! Đội ngũ MOHO sẽ liên hệ xác nhận đơn hàng trong 15 phút.'
+            'message': 'Đặt hàng thành công! Đội ngũ moccnha sẽ liên hệ xác nhận đơn hàng trong 15 phút.'
         }), 201
     except Exception as e:
         return jsonify({'error': f'Lỗi đặt hàng: {str(e)}'}), 500

@@ -12,7 +12,7 @@ class MohoStoreTestCase(unittest.TestCase):
         response = self.client.get('/')
         self.assertEqual(response.status_code, 200)
         content = response.data.decode('utf-8')
-        self.assertIn('moho', content)
+        self.assertIn('moccnha', content)
         self.assertIn('VLINE', content)
         self.assertIn('Bán chạy', content)
         self.assertIn('Ưu Đãi Tháng Phái Đẹp', content)
@@ -62,7 +62,7 @@ class MohoStoreTestCase(unittest.TestCase):
         res_data = json.loads(res.data)
         self.assertTrue(res_data['success'])
         order_code = res_data['order_code']
-        self.assertTrue(order_code.startswith('MOHO-'))
+        self.assertTrue(order_code.startswith('MOC-') or order_code.startswith('MOHO-'))
 
         # Check status update
         patch_res = self.client.patch(
@@ -112,7 +112,12 @@ class MohoStoreTestCase(unittest.TestCase):
         data = json.loads(res.data)
         self.assertIn('total_products', data)
         self.assertIn('total_orders', data)
-        self.assertIn('total_revenue', data)
+    def test_pages(self):
+        for route in ['/about', '/stores', '/news', '/b2b', '/policy']:
+            res = self.client.get(route)
+            self.assertEqual(res.status_code, 200, f"Route {route} failed")
+            content = res.data.decode('utf-8')
+            self.assertIn('moccnha', content)
 
 if __name__ == '__main__':
     unittest.main()

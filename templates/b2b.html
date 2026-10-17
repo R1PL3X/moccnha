@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="vi" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nội Thất Giá Sỉ & Đối Tác Dự Án - moccnha | Chiết Khấu Đến 35%</title>
+  <meta name="description" content="Chính sách giá sỉ và hợp tác dự án nội thất cho kiến trúc sư, nhà thầu, khách sạn và homestay từ xưởng sản xuất moccnha.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            moho: {
+              wood: '#a0673d',
+              'wood-dark': '#86522c',
+              terracotta: '#c85a32',
+              red: '#e53935'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪵</text></svg>">
+</head>
+<body class="bg-white dark:bg-zinc-950 text-gray-800 dark:text-zinc-100 transition-colors duration-300">
+
+  <!-- TOP ANNOUNCEMENT BAR -->
+  <div class="bg-zinc-900 text-zinc-300 dark:bg-black dark:text-zinc-400 text-xs py-1.5 px-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="hidden sm:flex items-center gap-4">
+        <span>🚚 Miễn phí giao hàng & lắp đặt tại TP.HCM & Hà Nội (Đơn từ 2 triệu)</span>
+        <span class="text-zinc-600">|</span>
+        <span>🛡️ Bảo hành 2 năm & Bảo trì trọn đời</span>
+      </div>
+      <div class="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-4">
+        <a href="tel:0971141140" class="hover:text-amber-400 transition">Hotline: <strong>097 114 1140</strong></a>
+        <span class="text-zinc-600">|</span>
+        <a href="/admin" class="hover:text-amber-400 transition text-[11px] bg-zinc-800 px-2 py-0.5 rounded">Trang Admin Quản Trị</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN HEADER -->
+  <header class="header-sticky sticky top-0 z-40 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-gray-100 dark:border-zinc-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
+      <a href="/" class="flex items-baseline select-none">
+        <span class="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white">moccnha</span>
+        <span class="text-3xl sm:text-4xl font-black text-amber-600 leading-none">.</span>
+      </a>
+
+      <!-- Center Nav Links -->
+      <nav class="hidden md:flex items-center gap-7 text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-zinc-300">
+        <a href="/" class="hover:text-amber-800 dark:hover:text-amber-400 transition">Sản phẩm</a>
+        <a href="/#promoSection" class="text-red-600 dark:text-red-400 hover:text-red-700 transition">Khuyến mãi</a>
+        <a href="/#bestsellerSection" class="hover:text-amber-800 dark:hover:text-amber-400 transition">Bán chạy</a>
+        <a href="/b2b" class="text-amber-800 dark:text-amber-400 font-bold border-b-2 border-amber-800 dark:border-amber-400 pb-1">Nội thất giá sỉ</a>
+        <a href="/news" class="hover:text-amber-800 dark:hover:text-amber-400 transition">Tin tức</a>
+        <a href="/about" class="hover:text-amber-800 dark:hover:text-amber-400 transition">Về moccnha</a>
+        <a href="/stores" class="hover:text-amber-800 dark:hover:text-amber-400 transition">Cửa hàng</a>
+      </nav>
+
+      <!-- Right Header Actions -->
+      <div class="flex items-center gap-4">
+        <button 
+          type="button" 
+          onclick="toggleTheme()" 
+          class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-600 dark:text-yellow-400 transition" 
+          title="Đổi giao diện Dark Mode"
+        >
+          <svg class="sun-icon w-5 h-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg class="moon-icon w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+
+        <a href="#b2bForm" class="text-xs font-semibold px-4 py-2 bg-amber-800 hover:bg-amber-900 text-white rounded transition shadow-sm">
+          Nhận Báo Giá B2B &rarr;
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO SECTION -->
+  <section class="py-16 bg-gradient-to-b from-amber-50/50 to-white dark:from-zinc-900 dark:to-zinc-950 border-b border-gray-100 dark:border-zinc-800 text-center">
+    <div class="max-w-4xl mx-auto px-4">
+      <span class="inline-block text-amber-800 dark:text-amber-400 font-bold uppercase tracking-widest text-xs mb-3 px-3 py-1 bg-amber-100 dark:bg-zinc-800 rounded-full">
+        Dành Cho Doanh Nghiệp & Kiến Trúc Sư
+      </span>
+      <h1 class="text-3xl sm:text-5xl font-extrabold text-gray-900 dark:text-white mb-4">
+        Cung Cấp Nội Thất Giá Sỉ <br />
+        <span class="text-amber-800 dark:text-amber-500">& Hợp Tác Dự Án Trọn Gói</span>
+      </h1>
+      <p class="text-xs sm:text-sm text-gray-600 dark:text-zinc-300 max-w-2xl mx-auto leading-relaxed">
+        Chiết khấu hấp dẫn lên tới 35% cho các đơn hàng số lượng lớn, dự án chung cư mẫu, khách sạn, homestay và đối tác thi công nội thất trên toàn quốc.
+      </p>
+    </div>
+  </section>
+
+  <!-- DISCOUNT TIERS TABLE -->
+  <section class="py-16 max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="text-center mb-10">
+      <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Bảng Chính Sách Chiết Khấu Ưu Đãi</h2>
+      <p class="text-xs text-gray-500 dark:text-zinc-400">Áp dụng trực tiếp trên tổng giá trị đơn hàng theo từng định mức</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      
+      <!-- Tier 1 -->
+      <div class="bg-white dark:bg-zinc-800 p-8 rounded-2xl border border-gray-200 dark:border-zinc-700 shadow-sm flex flex-col justify-between">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-zinc-500">Mức 1</span>
+          <h3 class="text-xl font-bold text-gray-900 dark:text-white mt-1 mb-4">Đơn Hàng Khởi Điểm</h3>
+          <div class="text-3xl font-extrabold text-amber-800 dark:text-amber-400 mb-2">15% OFF</div>
+          <p class="text-xs text-gray-500 dark:text-zinc-400 mb-6">Đơn từ <strong>30.000.000đ</strong> đến <strong>70.000.000đ</strong></p>
+          <ul class="space-y-3 text-xs text-gray-600 dark:text-zinc-300">
+            <li class="flex items-center gap-2">✅ Miễn phí giao hàng nội thành</li>
+            <li class="flex items-center gap-2">✅ Bảo hành chính hãng 2 năm</li>
+            <li class="flex items-center gap-2">✅ Cung cấp mẫu gỗ thử nghiệm</li>
+          </ul>
+        </div>
+        <a href="#b2bForm" class="mt-8 block text-center py-2.5 bg-gray-100 dark:bg-zinc-700 hover:bg-gray-200 dark:hover:bg-zinc-600 text-gray-800 dark:text-zinc-200 rounded-lg text-xs font-bold transition">
+          Đăng ký hợp tác
+        </a>
+      </div>
+
+      <!-- Tier 2 (Highlighted) -->
+      <div class="bg-amber-800 text-white p-8 rounded-2xl shadow-xl border-2 border-amber-700 flex flex-col justify-between relative transform md:-translate-y-2">
+        <span class="absolute -top-3 right-6 bg-red-500 text-white text-[10px] font-extrabold uppercase px-3 py-1 rounded-full shadow">
+          PHỔ BIẾN NHẤT
+        </span>
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-amber-200">Mức 2</span>
+          <h3 class="text-xl font-bold text-white mt-1 mb-4">Dự Án Vừa & Nhỏ</h3>
+          <div class="text-3xl font-extrabold text-amber-300 mb-2">22% OFF</div>
+          <p class="text-xs text-amber-100 mb-6">Đơn từ <strong>70.000.000đ</strong> đến <strong>150.000.000đ</strong></p>
+          <ul class="space-y-3 text-xs text-amber-50">
+            <li class="flex items-center gap-2">✅ Miễn phí vận chuyển & lắp đặt tận nơi</li>
+            <li class="flex items-center gap-2">✅ Cung cấp trọn bộ thư viện 3D SketchUp</li>
+            <li class="flex items-center gap-2">✅ Ưu tiên tiến độ giao hàng trong 5 ngày</li>
+            <li class="flex items-center gap-2">✅ Hỗ trợ xuất hóa đơn VAT đầy đủ</li>
+          </ul>
+        </div>
+        <a href="#b2bForm" class="mt-8 block text-center py-2.5 bg-white hover:bg-amber-100 text-amber-900 rounded-lg text-xs font-bold transition shadow">
+          Đăng ký ngay
+        </a>
+      </div>
+
+      <!-- Tier 3 -->
+      <div class="bg-white dark:bg-zinc-800 p-8 rounded-2xl border border-gray-200 dark:border-zinc-700 shadow-sm flex flex-col justify-between">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-zinc-500">Mức 3</span>
+          <h3 class="text-xl font-bold text-gray-900 dark:text-white mt-1 mb-4">Dự Án Lớn & Đối Tác VIP</h3>
+          <div class="text-3xl font-extrabold text-amber-800 dark:text-amber-400 mb-2">35% OFF</div>
+          <p class="text-xs text-gray-500 dark:text-zinc-400 mb-6">Đơn từ <strong>150.000.000đ</strong> trở lên</p>
+          <ul class="space-y-3 text-xs text-gray-600 dark:text-zinc-300">
+            <li class="flex items-center gap-2">✅ Chiết khấu tối đa tại xưởng sản xuất</li>
+            <li class="flex items-center gap-2">✅ Kỹ sư moccnha giám sát lắp đặt tại dự án</li>
+            <li class="flex items-center gap-2">✅ Tùy biến kích thước theo bản vẽ (OEM)</li>
+            <li class="flex items-center gap-2">✅ Chính sách bảo trì trọn đời ưu tiên</li>
+          </ul>
+        </div>
+        <a href="#b2bForm" class="mt-8 block text-center py-2.5 bg-gray-100 dark:bg-zinc-700 hover:bg-gray-200 dark:hover:bg-zinc-600 text-gray-800 dark:text-zinc-200 rounded-lg text-xs font-bold transition">
+          Liên hệ tư vấn VIP
+        </a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FORM SECTION -->
+  <section id="b2bForm" class="py-16 bg-gray-50 dark:bg-zinc-900 border-t border-gray-100 dark:border-zinc-800">
+    <div class="max-w-2xl mx-auto px-4 bg-white dark:bg-zinc-800 p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-zinc-700">
+      <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2 text-center">Gửi Yêu Cầu Báo Giá Dự Án</h3>
+      <p class="text-xs text-gray-500 dark:text-zinc-400 mb-6 text-center">Đội ngũ chuyên viên dự án của moccnha sẽ liên hệ lại trong vòng 30 phút làm việc.</p>
+      
+      <form onsubmit="event.preventDefault(); alert('Cảm ơn bạn! Đội ngũ dự án moccnha đã tiếp nhận và sẽ liên hệ trong 30 phút.');" class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 dark:text-zinc-300 mb-1">Họ và tên *</label>
+            <input type="text" required placeholder="Nguyễn Văn A" class="w-full px-3 py-2 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-800 dark:text-zinc-200 focus:outline-none focus:border-amber-800" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 dark:text-zinc-300 mb-1">Số điện thoại / Zalo *</label>
+            <input type="tel" required placeholder="0901 234 567" class="w-full px-3 py-2 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-800 dark:text-zinc-200 focus:outline-none focus:border-amber-800" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 dark:text-zinc-300 mb-1">Email doanh nghiệp</label>
+            <input type="email" placeholder="contact@company.com" class="w-full px-3 py-2 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-800 dark:text-zinc-200 focus:outline-none focus:border-amber-800" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 dark:text-zinc-300 mb-1">Loại hình dự án</label>
+            <select class="w-full px-3 py-2 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-800 dark:text-zinc-200 focus:outline-none focus:border-amber-800">
+              <option>Chung cư / Căn hộ dịch vụ</option>
+              <option>Khách sạn / Homestay / Resort</option>
+              <option>Văn phòng công ty</option>
+              <option>Kiến trúc sư / Nhà thiết kế tự do</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 dark:text-zinc-300 mb-1">Danh mục sản phẩm quan tâm & Số lượng dự kiến</label>
+          <textarea rows="3" placeholder="Ví dụ: Cần báo giá 20 bộ giường HOBRO 1m6 và táp đầu giường cho dự án căn hộ tại Quận 2..." class="w-full px-3 py-2 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-800 dark:text-zinc-200 focus:outline-none focus:border-amber-800"></textarea>
+        </div>
+
+        <button type="submit" class="w-full py-3 bg-amber-800 hover:bg-amber-900 text-white font-bold text-xs uppercase tracking-wider rounded-lg transition shadow-md">
+          Gửi Yêu Cầu Nhận Báo Giá Ngay
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="bg-zinc-900 text-zinc-300 dark:bg-black dark:text-zinc-400 text-xs border-t border-zinc-800 py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div>
+        <a href="/" class="flex items-baseline select-none mb-3">
+          <span class="text-2xl font-black text-white">moccnha</span>
+          <span class="text-2xl font-black text-amber-500">.</span>
+        </a>
+        <p class="text-zinc-400 leading-relaxed mb-4">
+          Nội thất gỗ tự nhiên hiện đại chuẩn quốc tế. Tinh giản chi phí, nâng tầm chất lượng sống cho ngôi nhà bạn.
+        </p>
+        <p class="text-zinc-400 font-semibold">Hotline: 097 114 1140</p>
+      </div>
+
+      <div>
+        <h4 class="text-white font-bold uppercase tracking-wider mb-4 text-xs">Về Chúng Tôi</h4>
+        <ul class="space-y-2 text-zinc-400">
+          <li><a href="/about" class="hover:text-amber-400 transition">Câu chuyện moccnha</a></li>
+          <li><a href="/stores" class="hover:text-amber-400 transition">Hệ thống showroom</a></li>
+          <li><a href="/news" class="hover:text-amber-400 transition">Tin tức & Cẩm nang</a></li>
+          <li><a href="/b2b" class="hover:text-amber-400 transition">Hợp tác dự án & Giá sỉ</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="text-white font-bold uppercase tracking-wider mb-4 text-xs">Chính Sách & Hỗ Trợ</h4>
+        <ul class="space-y-2 text-zinc-400">
+          <li><a href="/policy#warranty" class="hover:text-amber-400 transition">Chính sách bảo hành 2 năm</a></li>
+          <li><a href="/policy#return" class="hover:text-amber-400 transition">Chính sách đổi trả 1-1</a></li>
+          <li><a href="/policy#shipping" class="hover:text-amber-400 transition">Giao hàng & Lắp đặt</a></li>
+          <li><a href="/policy#payment" class="hover:text-amber-400 transition">Hướng dẫn thanh toán</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="text-white font-bold uppercase tracking-wider mb-4 text-xs">Hệ Thống Showroom</h4>
+        <p class="text-zinc-400 mb-2">📍 <strong>TP.HCM:</strong> 162 Nguyễn Thị Thập, Q.7</p>
+        <p class="text-zinc-400 mb-2">📍 <strong>Hà Nội:</strong> 21 Lê Đức Thọ, Nam Từ Liêm</p>
+        <p class="text-zinc-400">🕒 Mở cửa: 08:30 - 21:00 (Tất cả các ngày)</p>
+      </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 border-t border-zinc-800 mt-8 pt-6 text-center text-zinc-500">
+      &copy; 2026 moccnha. Tất cả các quyền được bảo lưu.
+    </div>
+  </footer>
+
+  <script>
+    let THEME = localStorage.getItem('moho_theme') || 'light';
+    if (THEME === 'dark') document.documentElement.classList.add('dark');
+    updateThemeIcons();
+
+    function toggleTheme() {
+      if (document.documentElement.classList.contains('dark')) {
+        document.documentElement.classList.remove('dark');
+        THEME = 'light';
+      } else {
+        document.documentElement.classList.add('dark');
+        THEME = 'dark';
+      }
+      localStorage.setItem('moho_theme', THEME);
+      updateThemeIcons();
+    }
+
+    function updateThemeIcons() {
+      const sun = document.querySelector('.sun-icon');
+      const moon = document.querySelector('.moon-icon');
+      if (THEME === 'dark') {
+        sun?.classList.remove('hidden');
+        moon?.classList.add('hidden');
+      } else {
+        sun?.classList.add('hidden');
+        moon?.classList.remove('hidden');
+      }
+    }
+  </script>
+</body>
+</html>
