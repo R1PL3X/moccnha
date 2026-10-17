@@ -32,6 +32,8 @@ except Exception:
 
 # --- FRONTEND PAGES ---
 @app.route('/')
+@app.route('/api/index')
+@app.route('/api/index.py')
 def home():
     return render_template('index.html')
 
