@@ -1295,55 +1295,42 @@ function handleLogout() {
   showToast('Đã đăng xuất tài khoản', 'info');
 }
 
-let userDropdownTimer = null;
-
-function showUserDropdown() {
-  clearTimeout(userDropdownTimer);
-  const dropdown = document.getElementById('userDropdownMenu');
-  if (dropdown) {
-    dropdown.classList.remove('hidden');
-    dropdown.style.display = 'block';
-  }
-}
-
-function hideUserDropdown(delay = 400) {
-  clearTimeout(userDropdownTimer);
-  userDropdownTimer = setTimeout(() => {
-    const dropdown = document.getElementById('userDropdownMenu');
-    if (dropdown && dropdown.dataset.locked !== 'true') {
-      dropdown.classList.add('hidden');
-      dropdown.style.display = 'none';
-    }
-  }, delay);
-}
-
 function toggleUserDropdown(event) {
   if (event) {
     event.stopPropagation();
   }
   const dropdown = document.getElementById('userDropdownMenu');
+  const arrow = document.getElementById('userMenuArrow');
+  const btn = document.getElementById('userMenuButton');
   if (!dropdown) return;
-  clearTimeout(userDropdownTimer);
 
-  if (dropdown.dataset.locked === 'true') {
-    dropdown.dataset.locked = 'false';
-    dropdown.classList.add('hidden');
+  const isVisible = dropdown.style.display === 'block';
+
+  if (isVisible) {
+    // Đang mở -> Bấm để đóng
     dropdown.style.display = 'none';
+    dropdown.classList.add('hidden');
+    if (arrow) arrow.classList.remove('rotate-180');
+    if (btn) btn.classList.remove('bg-gray-100', 'dark:bg-zinc-800');
   } else {
-    dropdown.dataset.locked = 'true';
-    dropdown.classList.remove('hidden');
+    // Đang đóng -> BẤM ĐỂ MỞ VÀ GIỮ NGUYÊN (Hold in place)
     dropdown.style.display = 'block';
+    dropdown.classList.remove('hidden');
+    if (arrow) arrow.classList.add('rotate-180');
+    if (btn) btn.classList.add('bg-gray-100', 'dark:bg-zinc-800');
   }
 }
 
 function closeUserDropdown() {
-  clearTimeout(userDropdownTimer);
   const dropdown = document.getElementById('userDropdownMenu');
+  const arrow = document.getElementById('userMenuArrow');
+  const btn = document.getElementById('userMenuButton');
   if (dropdown) {
-    dropdown.dataset.locked = 'false';
-    dropdown.classList.add('hidden');
     dropdown.style.display = 'none';
+    dropdown.classList.add('hidden');
   }
+  if (arrow) arrow.classList.remove('rotate-180');
+  if (btn) btn.classList.remove('bg-gray-100', 'dark:bg-zinc-800');
 }
 
 function updateAuthUI() {
@@ -1352,52 +1339,55 @@ function updateAuthUI() {
 
   if (STATE.user) {
     authContainer.innerHTML = `
-      <div 
-        id="userMenuWrapper" 
-        class="relative cursor-pointer flex items-center gap-2 select-none" 
-        onclick="toggleUserDropdown(event)"
-        onmouseenter="showUserDropdown()"
-        onmouseleave="hideUserDropdown(400)"
-      >
-        <div class="w-8 h-8 rounded-full bg-amber-100 dark:bg-zinc-800 text-amber-800 dark:text-amber-400 font-bold flex items-center justify-center text-xs shadow-sm">
-          ${STATE.user.fullname.charAt(0).toUpperCase()}
-        </div>
-        <div class="text-left hidden sm:block">
-          <div class="text-[11px] text-gray-500 dark:text-gray-400">Xin chào,</div>
-          <div class="text-xs font-semibold text-gray-900 dark:text-white max-w-[120px] truncate">${STATE.user.fullname}</div>
-        </div>
-        <svg class="w-3.5 h-3.5 text-gray-400 hidden sm:block transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-        </svg>
+      <div class="relative">
+        <!-- Nút bấm mục tài khoản: Bấm để mở và giữ nguyên -->
+        <button 
+          type="button" 
+          id="userMenuButton"
+          onclick="toggleUserDropdown(event)" 
+          class="flex items-center gap-2 py-1.5 px-3 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 transition select-none cursor-pointer border border-transparent hover:border-gray-200 dark:hover:border-zinc-700"
+          title="Bấm để xem danh mục tài khoản"
+        >
+          <div class="w-8 h-8 rounded-full bg-amber-100 dark:bg-zinc-800 text-amber-800 dark:text-amber-400 font-bold flex items-center justify-center text-xs shadow-sm">
+            ${STATE.user.fullname.charAt(0).toUpperCase()}
+          </div>
+          <div class="text-left hidden sm:block">
+            <div class="text-[11px] text-gray-500 dark:text-gray-400 leading-tight">Xin chào,</div>
+            <div class="text-xs font-semibold text-gray-900 dark:text-white max-w-[120px] truncate mt-0.5">${STATE.user.fullname}</div>
+          </div>
+          <svg id="userMenuArrow" class="w-3.5 h-3.5 text-gray-400 hidden sm:block transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
 
-        <!-- Dropdown Menu -->
+        <!-- Dropdown Menu: Chỉ mở khi BẤM, giữ nguyên cố định không bao giờ tự biến mất -->
         <div 
           id="userDropdownMenu" 
-          class="absolute right-0 top-full pt-1.5 w-56 hidden z-50"
-          onmouseenter="showUserDropdown()"
-          onmouseleave="hideUserDropdown(400)"
+          class="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-zinc-800 rounded-xl shadow-2xl border border-gray-200 dark:border-zinc-700 py-1.5 hidden z-50"
+          style="display: none;"
           onclick="event.stopPropagation()"
         >
-          <div class="bg-white dark:bg-zinc-800 rounded-lg shadow-2xl border border-gray-100 dark:border-zinc-700 py-1 overflow-hidden">
-            <div class="px-4 py-2.5 border-b border-gray-100 dark:border-zinc-700 text-xs text-gray-500 dark:text-gray-400 bg-gray-50/50 dark:bg-zinc-800/50">
-              <strong class="text-gray-900 dark:text-white font-semibold">${STATE.user.fullname}</strong><br/>
-              <span class="text-[11px] text-gray-500 dark:text-gray-400">${STATE.user.email}</span>
-            </div>
-            <button onclick="closeUserDropdown(); openMyOrdersModal();" class="w-full text-left px-4 py-2.5 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700 flex items-center gap-2 transition">
-              <span>📦</span>
-              <span>Đơn hàng của tôi</span>
-            </button>
-            ${STATE.user.role === 'admin' ? `
-              <a href="/admin" class="block px-4 py-2.5 text-xs text-amber-700 dark:text-amber-400 font-semibold hover:bg-amber-50 dark:hover:bg-zinc-700/80 flex items-center gap-2 transition">
-                <span>⚡</span>
-                <span>Trang Quản Trị Admin</span>
-              </a>
-            ` : ''}
-            <button onclick="closeUserDropdown(); handleLogout();" class="w-full text-left px-4 py-2.5 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-zinc-700 border-t border-gray-100 dark:border-zinc-700 flex items-center gap-2 transition">
-              <span>🚪</span>
-              <span>Đăng xuất</span>
-            </button>
+          <div class="px-4 py-2.5 border-b border-gray-100 dark:border-zinc-700 text-xs text-gray-500 dark:text-gray-400 bg-gray-50/70 dark:bg-zinc-800/70">
+            <strong class="text-gray-900 dark:text-white font-semibold">${STATE.user.fullname}</strong><br/>
+            <span class="text-[11px] text-gray-500 dark:text-gray-400">${STATE.user.email}</span>
           </div>
+
+          <button onclick="closeUserDropdown(); openMyOrdersModal();" class="w-full text-left px-4 py-2.5 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700 flex items-center gap-2.5 transition">
+            <span>📦</span>
+            <span class="font-medium">Đơn hàng của tôi</span>
+          </button>
+
+          ${STATE.user.role === 'admin' ? `
+            <a href="/admin" class="block px-4 py-2.5 text-xs text-amber-700 dark:text-amber-400 font-semibold hover:bg-amber-50 dark:hover:bg-zinc-700/80 flex items-center gap-2.5 transition">
+              <span>⚡</span>
+              <span>Trang Quản Trị Admin</span>
+            </a>
+          ` : ''}
+
+          <button onclick="closeUserDropdown(); handleLogout();" class="w-full text-left px-4 py-2.5 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-zinc-700 border-t border-gray-100 dark:border-zinc-700 flex items-center gap-2.5 transition mt-1">
+            <span>🚪</span>
+            <span class="font-medium">Đăng xuất</span>
+          </button>
         </div>
       </div>
     `;
