@@ -141,6 +141,7 @@ body {
 
 /* Floating Action Circle Buttons */
 .fab-btn {
+  display: none !important;
   width: 44px;
   height: 44px;
   border-radius: 50%;

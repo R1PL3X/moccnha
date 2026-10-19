@@ -428,66 +428,7 @@
     </div>
   </footer>
 
-  <!-- FLOATING CONTACT ACTIONS (Exactly as shown in bottom right of Images) -->
-  <div class="fixed right-4 bottom-6 z-50 flex flex-col gap-2.5 items-end">
-    
-    <!-- Phone / Hotline button (Green) -->
-    <button 
-      onclick="handleHotlineClick()" 
-      class="fab-btn fab-phone group relative" 
-      title="Gọi điện tư vấn: 097 114 1140"
-      aria-label="Gọi hotline"
-    >
-      <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
-        <path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
-      </svg>
-      <span class="absolute right-12 whitespace-nowrap bg-black/80 text-white text-[11px] font-medium px-2.5 py-1 rounded shadow opacity-0 group-hover:opacity-100 transition pointer-events-none">
-        Hotline: 097 114 1140
-      </span>
-    </button>
 
-    <!-- Zalo button (Blue) -->
-    <button 
-      onclick="handleZaloChat()" 
-      class="fab-btn fab-zalo group relative" 
-      title="Chat qua Zalo"
-      aria-label="Chat Zalo"
-    >
-      <span class="font-extrabold text-[12px] tracking-tight">Zalo</span>
-      <span class="absolute right-12 whitespace-nowrap bg-black/80 text-white text-[11px] font-medium px-2.5 py-1 rounded shadow opacity-0 group-hover:opacity-100 transition pointer-events-none">
-        Chat qua Zalo
-      </span>
-    </button>
-
-    <!-- Messenger button (Blue bubble) -->
-    <button 
-      onclick="handleMessengerChat()" 
-      class="fab-btn fab-messenger group relative" 
-      title="Chat Messenger Facebook"
-      aria-label="Chat Facebook Messenger"
-    >
-      <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
-        <path d="M12 2C6.477 2 2 6.145 2 11.258c0 2.914 1.455 5.522 3.734 7.218V22l3.415-1.874c.915.254 1.884.39 2.851.39 5.523 0 10-4.145 10-9.258C22 6.145 17.523 2 12 2zm1.066 12.433l-2.73-2.91-5.326 2.91 5.858-6.22 2.798 2.91 5.258-2.91-5.858 6.22z"/>
-      </svg>
-      <span class="absolute right-12 whitespace-nowrap bg-black/80 text-white text-[11px] font-medium px-2.5 py-1 rounded shadow opacity-0 group-hover:opacity-100 transition pointer-events-none">
-        Chat Messenger
-      </span>
-    </button>
-
-    <!-- Scroll to Top button (Green arrow) -->
-    <button 
-      id="scrollTopBtn" 
-      onclick="scrollToTop()" 
-      class="fab-btn fab-scrolltop opacity-0 pointer-events-none transition-all duration-300" 
-      title="Lên đầu trang"
-      aria-label="Cuộn lên đầu trang"
-    >
-      <svg class="w-5 h-5 stroke-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
-      </svg>
-    </button>
-
-  </div>
 
   <!-- SHOPPING CART SLIDE-OVER DRAWER -->
   <div id="cartDrawer" class="fixed inset-0 z-50 hidden cart-drawer-backdrop opacity-0 transition-opacity">
