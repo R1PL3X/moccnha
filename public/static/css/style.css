@@ -216,3 +216,17 @@ body {
 .pulse-tag {
   animation: pulse-subtle 2s infinite ease-in-out;
 }
+
+/* User Profile Dropdown & Hover Bridge */
+#userDropdownMenu.open {
+  display: block !important;
+}
+
+#userDropdownMenu::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 0;
+  right: 0;
+  height: 14px;
+}
