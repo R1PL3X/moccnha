@@ -59,14 +59,14 @@
           <button 
             type="button" 
             onclick="openSideMenu()" 
-            class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 dark:text-zinc-200 hover:bg-gray-100 dark:hover:bg-zinc-800 transition focus:outline-none border border-gray-200 dark:border-zinc-700 shadow-2xs"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 dark:text-zinc-200 hover:bg-gray-100 dark:hover:bg-zinc-800 transition focus:outline-none border border-gray-200 dark:border-zinc-700 shadow-2xs hover:border-amber-700/50"
             title="Mở menu danh mục bên trái"
-            aria-label="Mở menu bên trái"
+            aria-label="Mở danh mục bên trái"
           >
             <svg class="w-5 h-5 stroke-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
-            <span class="text-xs font-bold uppercase tracking-wider hidden sm:inline">Menu</span>
+            <span class="text-xs font-bold uppercase tracking-wider hidden sm:inline">Danh mục</span>
           </button>
 
           <!-- Logo (moccnha.) -->
@@ -429,29 +429,29 @@
               Danh mục nội thất
             </div>
             <div class="space-y-1">
-              <a href="/#bestsellerSection" onclick="filterCategoryFromMenu('all')" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold hover:bg-amber-50 dark:hover:bg-zinc-800 hover:text-amber-800 dark:hover:text-amber-400 transition">
-                <span class="text-base">🪵</span>
+              <a href="/#bestsellerSection" onclick="filterCategoryFromMenu('all')" class="flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold hover:bg-amber-50 dark:hover:bg-zinc-800 hover:text-amber-800 dark:hover:text-amber-400 transition">
                 <span>Tất Cả Sản Phẩm</span>
+                <span class="text-gray-300 dark:text-zinc-600 text-xs">&rarr;</span>
               </a>
-              <a href="/#bestsellerSection" onclick="filterCategoryFromMenu('Phòng Khách')" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold hover:bg-amber-50 dark:hover:bg-zinc-800 hover:text-amber-800 dark:hover:text-amber-400 transition">
-                <span class="text-base">🛋️</span>
+              <a href="/#bestsellerSection" onclick="filterCategoryFromMenu('Phòng Khách')" class="flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold hover:bg-amber-50 dark:hover:bg-zinc-800 hover:text-amber-800 dark:hover:text-amber-400 transition">
                 <span>Phòng Khách</span>
+                <span class="text-gray-300 dark:text-zinc-600 text-xs">&rarr;</span>
               </a>
-              <a href="/#bestsellerSection" onclick="filterCategoryFromMenu('Phòng Ngủ')" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold hover:bg-amber-50 dark:hover:bg-zinc-800 hover:text-amber-800 dark:hover:text-amber-400 transition">
-                <span class="text-base">🛏️</span>
+              <a href="/#bestsellerSection" onclick="filterCategoryFromMenu('Phòng Ngủ')" class="flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold hover:bg-amber-50 dark:hover:bg-zinc-800 hover:text-amber-800 dark:hover:text-amber-400 transition">
                 <span>Phòng Ngủ</span>
+                <span class="text-gray-300 dark:text-zinc-600 text-xs">&rarr;</span>
               </a>
-              <a href="/#bestsellerSection" onclick="filterCategoryFromMenu('Phòng Ăn')" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold hover:bg-amber-50 dark:hover:bg-zinc-800 hover:text-amber-800 dark:hover:text-amber-400 transition">
-                <span class="text-base">🍽️</span>
+              <a href="/#bestsellerSection" onclick="filterCategoryFromMenu('Phòng Ăn')" class="flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold hover:bg-amber-50 dark:hover:bg-zinc-800 hover:text-amber-800 dark:hover:text-amber-400 transition">
                 <span>Phòng Ăn</span>
+                <span class="text-gray-300 dark:text-zinc-600 text-xs">&rarr;</span>
               </a>
-              <a href="/#bestsellerSection" onclick="filterCategoryFromMenu('Phòng Làm Việc')" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold hover:bg-amber-50 dark:hover:bg-zinc-800 hover:text-amber-800 dark:hover:text-amber-400 transition">
-                <span class="text-base">💼</span>
+              <a href="/#bestsellerSection" onclick="filterCategoryFromMenu('Phòng Làm Việc')" class="flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold hover:bg-amber-50 dark:hover:bg-zinc-800 hover:text-amber-800 dark:hover:text-amber-400 transition">
                 <span>Phòng Làm Việc</span>
+                <span class="text-gray-300 dark:text-zinc-600 text-xs">&rarr;</span>
               </a>
-              <a href="/#bestsellerSection" onclick="filterCategoryFromMenu('Tủ & Kệ')" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold hover:bg-amber-50 dark:hover:bg-zinc-800 hover:text-amber-800 dark:hover:text-amber-400 transition">
-                <span class="text-base">🚪</span>
+              <a href="/#bestsellerSection" onclick="filterCategoryFromMenu('Tủ & Kệ')" class="flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold hover:bg-amber-50 dark:hover:bg-zinc-800 hover:text-amber-800 dark:hover:text-amber-400 transition">
                 <span>Tủ & Kệ</span>
+                <span class="text-gray-300 dark:text-zinc-600 text-xs">&rarr;</span>
               </a>
             </div>
           </div>

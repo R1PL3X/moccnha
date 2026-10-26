@@ -49,13 +49,14 @@
         <button 
           type="button" 
           onclick="openSideMenu()" 
-          class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 dark:text-zinc-200 hover:bg-gray-100 dark:hover:bg-zinc-800 transition focus:outline-none border border-gray-200 dark:border-zinc-700 shadow-2xs"
-          title="Mở menu bên trái"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 dark:text-zinc-200 hover:bg-gray-100 dark:hover:bg-zinc-800 transition focus:outline-none border border-gray-200 dark:border-zinc-700 shadow-2xs hover:border-amber-700/50"
+          title="Mở menu danh mục bên trái"
+          aria-label="Mở danh mục bên trái"
         >
           <svg class="w-5 h-5 stroke-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
-          <span class="text-xs font-bold uppercase tracking-wider hidden sm:inline">Menu</span>
+          <span class="text-xs font-bold uppercase tracking-wider hidden sm:inline">Danh mục</span>
         </button>
 
         <a href="/" class="flex items-baseline select-none">
@@ -63,17 +64,6 @@
           <span class="text-3xl sm:text-4xl font-black text-amber-600 leading-none">.</span>
         </a>
       </div>
-
-      <!-- Center Nav Links -->
-      <nav class="hidden md:flex items-center gap-7 text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-zinc-300">
-        <a href="/" class="hover:text-amber-800 dark:hover:text-amber-400 transition">Sản phẩm</a>
-        <a href="/#promoSection" class="text-red-600 dark:text-red-400 hover:text-red-700 transition">Khuyến mãi</a>
-        <a href="/#bestsellerSection" class="hover:text-amber-800 dark:hover:text-amber-400 transition">Bán chạy</a>
-        <a href="/b2b" class="hover:text-amber-800 dark:hover:text-amber-400 transition">Nội thất giá sỉ</a>
-        <a href="/news" class="hover:text-amber-800 dark:hover:text-amber-400 transition">Tin tức</a>
-        <a href="/about" class="hover:text-amber-800 dark:hover:text-amber-400 transition">Về moccnha</a>
-        <a href="/stores" class="hover:text-amber-800 dark:hover:text-amber-400 transition">Cửa hàng</a>
-      </nav>
 
       <!-- Right Header Actions -->
       <div class="flex items-center gap-4">
@@ -287,29 +277,29 @@
               Danh mục nội thất
             </div>
             <div class="space-y-1">
-              <a href="/#bestsellerSection" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold hover:bg-amber-50 dark:hover:bg-zinc-800 hover:text-amber-800 dark:hover:text-amber-400 transition">
-                <span class="text-base">🪵</span>
+              <a href="/#bestsellerSection" class="flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold hover:bg-amber-50 dark:hover:bg-zinc-800 hover:text-amber-800 dark:hover:text-amber-400 transition">
                 <span>Tất Cả Sản Phẩm</span>
+                <span class="text-gray-300 dark:text-zinc-600 text-xs">&rarr;</span>
               </a>
-              <a href="/?category=Phòng Khách" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold hover:bg-amber-50 dark:hover:bg-zinc-800 hover:text-amber-800 dark:hover:text-amber-400 transition">
-                <span class="text-base">🛋️</span>
+              <a href="/?category=Phòng Khách" class="flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold hover:bg-amber-50 dark:hover:bg-zinc-800 hover:text-amber-800 dark:hover:text-amber-400 transition">
                 <span>Phòng Khách</span>
+                <span class="text-gray-300 dark:text-zinc-600 text-xs">&rarr;</span>
               </a>
-              <a href="/?category=Phòng Ngủ" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold hover:bg-amber-50 dark:hover:bg-zinc-800 hover:text-amber-800 dark:hover:text-amber-400 transition">
-                <span class="text-base">🛏️</span>
+              <a href="/?category=Phòng Ngủ" class="flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold hover:bg-amber-50 dark:hover:bg-zinc-800 hover:text-amber-800 dark:hover:text-amber-400 transition">
                 <span>Phòng Ngủ</span>
+                <span class="text-gray-300 dark:text-zinc-600 text-xs">&rarr;</span>
               </a>
-              <a href="/?category=Phòng Ăn" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold hover:bg-amber-50 dark:hover:bg-zinc-800 hover:text-amber-800 dark:hover:text-amber-400 transition">
-                <span class="text-base">🍽️</span>
+              <a href="/?category=Phòng Ăn" class="flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold hover:bg-amber-50 dark:hover:bg-zinc-800 hover:text-amber-800 dark:hover:text-amber-400 transition">
                 <span>Phòng Ăn</span>
+                <span class="text-gray-300 dark:text-zinc-600 text-xs">&rarr;</span>
               </a>
-              <a href="/?category=Phòng Làm Việc" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold hover:bg-amber-50 dark:hover:bg-zinc-800 hover:text-amber-800 dark:hover:text-amber-400 transition">
-                <span class="text-base">💼</span>
+              <a href="/?category=Phòng Làm Việc" class="flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold hover:bg-amber-50 dark:hover:bg-zinc-800 hover:text-amber-800 dark:hover:text-amber-400 transition">
                 <span>Phòng Làm Việc</span>
+                <span class="text-gray-300 dark:text-zinc-600 text-xs">&rarr;</span>
               </a>
-              <a href="/?category=Tủ & Kệ" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold hover:bg-amber-50 dark:hover:bg-zinc-800 hover:text-amber-800 dark:hover:text-amber-400 transition">
-                <span class="text-base">🚪</span>
+              <a href="/?category=Tủ & Kệ" class="flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold hover:bg-amber-50 dark:hover:bg-zinc-800 hover:text-amber-800 dark:hover:text-amber-400 transition">
                 <span>Tủ & Kệ</span>
+                <span class="text-gray-300 dark:text-zinc-600 text-xs">&rarr;</span>
               </a>
             </div>
           </div>
