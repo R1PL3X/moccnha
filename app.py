@@ -103,9 +103,23 @@ def b2b_page():
 def policy_page():
     return render_template('policy.html')
 
+# --- ADMIN PORTAL ROUTES ---
 @app.route('/admin')
-def admin_page():
-    return render_template('admin.html')
+@app.route('/admin/revenue')
+def admin_revenue_page():
+    return render_template('admin_revenue.html')
+
+@app.route('/admin/orders')
+def admin_orders_page():
+    return render_template('admin_orders.html')
+
+@app.route('/admin/products')
+def admin_products_page():
+    return render_template('admin_products.html')
+
+@app.route('/admin/quotes')
+def admin_quotes_page():
+    return render_template('admin_quotes.html')
 
 @app.errorhandler(404)
 def not_found(e):
@@ -247,6 +261,52 @@ def update_order_status(order_code):
 def get_stats():
     stats = db_adapter.get_stats()
     return jsonify(stats)
+
+# --- B2B QUOTES ENDPOINTS ---
+@app.route('/api/quotes', methods=['POST'])
+def create_quote():
+    data = request.get_json() or {}
+    fullname = (data.get('fullname') or data.get('name') or '').strip()
+    phone = (data.get('phone') or '').strip()
+
+    if not fullname or not phone:
+        return jsonify({'error': 'Vui lòng cung cấp họ tên và số điện thoại liên hệ'}), 400
+
+    try:
+        new_id = db_adapter.create_quote(data)
+        return jsonify({
+            'success': True,
+            'id': new_id,
+            'message': 'Gửi yêu cầu báo giá thành công! Đội ngũ chuyên viên dự án moccnha sẽ liên hệ lại trong vòng 30 phút.'
+        }), 201
+    except Exception as e:
+        return jsonify({'error': f'Lỗi khi gửi yêu cầu báo giá: {str(e)}'}), 500
+
+@app.route('/api/quotes', methods=['GET'])
+def get_quotes():
+    quotes = db_adapter.get_quotes()
+    return jsonify(quotes or [])
+
+@app.route('/api/quotes/<int:quote_id>/status', methods=['PATCH'])
+def update_quote_status(quote_id):
+    data = request.get_json() or {}
+    new_status = data.get('status')
+    if not new_status:
+        return jsonify({'error': 'Thiếu trạng thái mới'}), 400
+
+    try:
+        db_adapter.update_quote_status(quote_id, new_status)
+        return jsonify({'success': True, 'message': 'Cập nhật trạng thái báo giá thành công'})
+    except Exception as e:
+        return jsonify({'error': f'Lỗi cập nhật trạng thái: {str(e)}'}), 500
+
+@app.route('/api/quotes/<int:quote_id>', methods=['DELETE'])
+def delete_quote(quote_id):
+    try:
+        db_adapter.delete_quote(quote_id)
+        return jsonify({'success': True, 'message': 'Đã xóa yêu cầu báo giá thành công'})
+    except Exception as e:
+        return jsonify({'error': f'Lỗi khi xóa yêu cầu: {str(e)}'}), 500
 
 # --- AUTH ENDPOINTS ---
 @app.route('/api/auth/register', methods=['POST'])

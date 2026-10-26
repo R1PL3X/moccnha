@@ -177,40 +177,40 @@
       <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2 text-center">Gửi Yêu Cầu Báo Giá Dự Án</h3>
       <p class="text-xs text-gray-500 dark:text-zinc-400 mb-6 text-center">Đội ngũ chuyên viên dự án của moccnha sẽ liên hệ lại trong vòng 30 phút làm việc.</p>
       
-      <form onsubmit="event.preventDefault(); alert('Cảm ơn bạn! Đội ngũ dự án moccnha đã tiếp nhận và sẽ liên hệ trong 30 phút.');" class="space-y-4">
+      <form id="b2bQuoteForm" onsubmit="handleQuoteSubmit(event)" class="space-y-4">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="block text-xs font-semibold text-gray-700 dark:text-zinc-300 mb-1">Họ và tên *</label>
-            <input type="text" required placeholder="Nguyễn Văn A" class="w-full px-3 py-2 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-800 dark:text-zinc-200 focus:outline-none focus:border-amber-800" />
+            <input id="quoteFullname" type="text" required placeholder="Nguyễn Văn A" class="w-full px-3 py-2 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-800 dark:text-zinc-200 focus:outline-none focus:border-amber-800" />
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-700 dark:text-zinc-300 mb-1">Số điện thoại / Zalo *</label>
-            <input type="tel" required placeholder="0901 234 567" class="w-full px-3 py-2 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-800 dark:text-zinc-200 focus:outline-none focus:border-amber-800" />
+            <input id="quotePhone" type="tel" required placeholder="0901 234 567" class="w-full px-3 py-2 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-800 dark:text-zinc-200 focus:outline-none focus:border-amber-800" />
           </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="block text-xs font-semibold text-gray-700 dark:text-zinc-300 mb-1">Email doanh nghiệp</label>
-            <input type="email" placeholder="contact@company.com" class="w-full px-3 py-2 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-800 dark:text-zinc-200 focus:outline-none focus:border-amber-800" />
+            <input id="quoteEmail" type="email" placeholder="contact@company.com" class="w-full px-3 py-2 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-800 dark:text-zinc-200 focus:outline-none focus:border-amber-800" />
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-700 dark:text-zinc-300 mb-1">Loại hình dự án</label>
-            <select class="w-full px-3 py-2 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-800 dark:text-zinc-200 focus:outline-none focus:border-amber-800">
-              <option>Chung cư / Căn hộ dịch vụ</option>
-              <option>Khách sạn / Homestay / Resort</option>
-              <option>Văn phòng công ty</option>
-              <option>Kiến trúc sư / Nhà thiết kế tự do</option>
+            <select id="quoteProjectType" class="w-full px-3 py-2 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-800 dark:text-zinc-200 focus:outline-none focus:border-amber-800">
+              <option value="Chung cư / Căn hộ dịch vụ">Chung cư / Căn hộ dịch vụ</option>
+              <option value="Khách sạn / Homestay / Resort">Khách sạn / Homestay / Resort</option>
+              <option value="Văn phòng công ty">Văn phòng công ty</option>
+              <option value="Kiến trúc sư / Nhà thiết kế tự do">Kiến trúc sư / Nhà thiết kế tự do</option>
             </select>
           </div>
         </div>
 
         <div>
           <label class="block text-xs font-semibold text-gray-700 dark:text-zinc-300 mb-1">Danh mục sản phẩm quan tâm & Số lượng dự kiến</label>
-          <textarea rows="3" placeholder="Ví dụ: Cần báo giá 20 bộ giường HOBRO 1m6 và táp đầu giường cho dự án căn hộ tại Quận 2..." class="w-full px-3 py-2 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-800 dark:text-zinc-200 focus:outline-none focus:border-amber-800"></textarea>
+          <textarea id="quoteNote" rows="3" placeholder="Ví dụ: Cần báo giá 20 bộ giường HOBRO 1m6 và táp đầu giường cho dự án căn hộ tại Quận 2..." class="w-full px-3 py-2 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-800 dark:text-zinc-200 focus:outline-none focus:border-amber-800"></textarea>
         </div>
 
-        <button type="submit" class="w-full py-3 bg-amber-800 hover:bg-amber-900 text-white font-bold text-xs uppercase tracking-wider rounded-lg transition shadow-md">
+        <button id="quoteSubmitBtn" type="submit" class="w-full py-3 bg-amber-800 hover:bg-amber-900 text-white font-bold text-xs uppercase tracking-wider rounded-lg transition shadow-md disabled:opacity-50">
           Gửi Yêu Cầu Nhận Báo Giá Ngay
         </button>
       </form>
@@ -290,6 +290,50 @@
       } else {
         sun?.classList.add('hidden');
         moon?.classList.remove('hidden');
+      }
+    }
+
+    async function handleQuoteSubmit(event) {
+      event.preventDefault();
+      const btn = document.getElementById('quoteSubmitBtn');
+      const originalText = btn.textContent;
+
+      const payload = {
+        fullname: document.getElementById('quoteFullname').value.trim(),
+        phone: document.getElementById('quotePhone').value.trim(),
+        email: document.getElementById('quoteEmail').value.trim(),
+        project_type: document.getElementById('quoteProjectType').value,
+        note: document.getElementById('quoteNote').value.trim()
+      };
+
+      if (!payload.fullname || !payload.phone) {
+        alert('Vui lòng nhập họ tên và số điện thoại liên hệ!');
+        return;
+      }
+
+      try {
+        btn.disabled = true;
+        btn.textContent = 'Đang gửi yêu cầu...';
+
+        const res = await fetch('/api/quotes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          alert(data.message || 'Cảm ơn bạn! Đội ngũ dự án moccnha đã tiếp nhận yêu cầu và sẽ liên hệ trong 30 phút.');
+          document.getElementById('b2bQuoteForm').reset();
+        } else {
+          alert(data.error || 'Có lỗi xảy ra khi gửi yêu cầu. Vui lòng thử lại sau.');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại kết nối mạng!');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
       }
     }
   </script>

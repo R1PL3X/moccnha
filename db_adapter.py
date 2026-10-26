@@ -108,6 +108,12 @@ def format_order_dict(d):
     res['items'] = normalize_json_field(res.get('items'))
     return res
 
+def format_quote_dict(d):
+    """Ensure consistent formatting for quote dicts"""
+    if not d:
+        return d
+    return dict(d)
+
 # ==============================================================================
 # DATA ACCESS FUNCTIONS
 # ==============================================================================
@@ -402,8 +408,101 @@ def update_order_status(order_code, new_status):
     conn.close()
     return True
 
+# ==============================================================================
+# B2B QUOTES DATA ACCESS FUNCTIONS
+# ==============================================================================
+
+def create_quote(quote_data):
+    """Insert a new B2B quote request"""
+    fullname = quote_data.get('fullname') or quote_data.get('name') or ''
+    phone = quote_data.get('phone') or ''
+    email = quote_data.get('email', '')
+    project_type = quote_data.get('project_type', '')
+    note = quote_data.get('note', '')
+    status = quote_data.get('status', 'pending')
+
+    if is_supabase_enabled():
+        try:
+            payload = {
+                'fullname': fullname,
+                'phone': phone,
+                'email': email,
+                'project_type': project_type,
+                'note': note,
+                'status': status
+            }
+            res = supabase_client.table('quotes').insert(payload).execute()
+            if res.data:
+                return res.data[0]['id']
+            return True
+        except Exception as e:
+            logger.error(f"Supabase create_quote error: {e}")
+            raise
+
+    # SQLite Fallback
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO quotes (fullname, phone, email, project_type, note, status)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (fullname, phone, email, project_type, note, status))
+    conn.commit()
+    new_id = cursor.lastrowid
+    conn.close()
+    return new_id
+
+def get_quotes():
+    """Retrieve all B2B quote requests for admin management"""
+    if is_supabase_enabled():
+        try:
+            res = supabase_client.table('quotes').select('*').order('created_at', desc=True).execute()
+            return [format_quote_dict(q) for q in (res.data or [])]
+        except Exception as e:
+            logger.error(f"Supabase get_quotes error: {e}")
+            pass
+
+    # SQLite Fallback
+    conn = get_db_connection()
+    rows = conn.execute('SELECT * FROM quotes ORDER BY created_at DESC').fetchall()
+    conn.close()
+    return [format_quote_dict(dict(r)) for r in rows]
+
+def update_quote_status(quote_id, new_status):
+    """Update status of a quote request by its ID"""
+    if is_supabase_enabled():
+        try:
+            supabase_client.table('quotes').update({'status': new_status}).eq('id', quote_id).execute()
+            return True
+        except Exception as e:
+            logger.error(f"Supabase update_quote_status error: {e}")
+            raise
+
+    # SQLite Fallback
+    conn = get_db_connection()
+    conn.execute('UPDATE quotes SET status = ? WHERE id = ?', (new_status, quote_id))
+    conn.commit()
+    conn.close()
+    return True
+
+def delete_quote(quote_id):
+    """Delete a quote request by ID"""
+    if is_supabase_enabled():
+        try:
+            supabase_client.table('quotes').delete().eq('id', quote_id).execute()
+            return True
+        except Exception as e:
+            logger.error(f"Supabase delete_quote error: {e}")
+            raise
+
+    # SQLite Fallback
+    conn = get_db_connection()
+    conn.execute('DELETE FROM quotes WHERE id = ?', (quote_id,))
+    conn.commit()
+    conn.close()
+    return True
+
 def get_stats():
-    """Calculate dashboard metrics (products count, orders count, total revenue)"""
+    """Calculate dashboard metrics (products count, orders count, total revenue, quotes count)"""
     if is_supabase_enabled():
         try:
             # Count products
@@ -415,11 +514,16 @@ def get_stats():
             orders = o_res.data or []
             total_orders = len(orders)
             total_revenue = sum(o.get('total_amount', 0) for o in orders if o.get('status') != 'cancelled')
+
+            # Count quotes
+            q_res = supabase_client.table('quotes').select('id', count='exact').execute()
+            total_quotes = q_res.count if q_res.count is not None else len(q_res.data or [])
             
             return {
                 'total_products': total_products,
                 'total_orders': total_orders,
-                'total_revenue': total_revenue
+                'total_revenue': total_revenue,
+                'total_quotes': total_quotes
             }
         except Exception as e:
             logger.error(f"Supabase get_stats error: {e}")
@@ -430,11 +534,16 @@ def get_stats():
     total_products = conn.execute('SELECT COUNT(*) FROM products').fetchone()[0]
     total_orders = conn.execute('SELECT COUNT(*) FROM orders').fetchone()[0]
     total_revenue = conn.execute('SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE status != "cancelled"').fetchone()[0]
+    try:
+        total_quotes = conn.execute('SELECT COUNT(*) FROM quotes').fetchone()[0]
+    except Exception:
+        total_quotes = 0
     conn.close()
     return {
         'total_products': total_products,
         'total_orders': total_orders,
-        'total_revenue': total_revenue
+        'total_revenue': total_revenue,
+        'total_quotes': total_quotes
     }
 
 def register_user(fullname, email, phone, password):

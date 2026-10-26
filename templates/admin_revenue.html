@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="vi" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Báo Cáo Doanh Thu Tích Lũy - Quản Trị moccnha</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            moho: {
+              wood: '#a0673d',
+              terracotta: '#c85a32'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪵</text></svg>">
+</head>
+<body class="bg-gray-50 dark:bg-zinc-950 text-gray-800 dark:text-zinc-100 min-h-screen">
+  
+  <!-- ADMIN NAVBAR -->
+  <header class="bg-white dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <a href="/" class="flex items-baseline select-none">
+          <span class="text-2xl font-black text-gray-900 dark:text-white">moccnha</span>
+          <span class="text-2xl font-black text-amber-600">.</span>
+        </a>
+        <span class="bg-amber-100 dark:bg-zinc-800 text-amber-800 dark:text-amber-400 text-xs px-2.5 py-0.5 rounded font-bold uppercase tracking-wider">
+          Admin Portal
+        </span>
+        <span id="db-status-pill" class="text-xs px-2.5 py-0.5 rounded-full font-medium hidden"></span>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <button 
+          type="button" 
+          onclick="toggleTheme()" 
+          class="theme-toggle-btn p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-600 dark:text-yellow-400 transition" 
+          title="Đổi giao diện"
+        >
+          <svg class="sun-icon w-5 h-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg class="moon-icon w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+
+        <a href="/" class="text-xs text-amber-800 dark:text-amber-400 font-semibold hover:underline flex items-center gap-1">
+          &larr; Xem cửa hàng moccnha
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+    
+    <!-- 4 CORE METRICS CARDS -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+      
+      <!-- Card 1: Doanh thu tích lũy (Active) -->
+      <a href="/admin/revenue" class="block bg-white dark:bg-zinc-900 p-5 rounded-xl border-2 border-amber-600 dark:border-amber-500 shadow-md ring-2 ring-amber-500/20 transition transform hover:-translate-y-0.5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">1. Doanh thu tích lũy</span>
+          <span class="text-lg">💰</span>
+        </div>
+        <div id="statRevenue" class="text-2xl font-black text-red-600 dark:text-red-400 mt-2">0₫</div>
+        <div class="text-[11px] text-green-600 dark:text-green-400 mt-1 flex items-center gap-1">
+          <span>●</span> Đang xem trang này
+        </div>
+      </a>
+
+      <!-- Card 2: Tổng đơn đặt hàng -->
+      <a href="/admin/orders" class="block bg-white dark:bg-zinc-900 p-5 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm hover:border-amber-500/50 hover:shadow-md transition transform hover:-translate-y-0.5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">2. Tổng đơn đặt hàng</span>
+          <span class="text-lg">📦</span>
+        </div>
+        <div id="statOrders" class="text-2xl font-black text-gray-900 dark:text-white mt-2">0</div>
+        <div class="text-[11px] text-gray-400 mt-1">Bấm để quản lý đơn &rarr;</div>
+      </a>
+
+      <!-- Card 3: Sản phẩm đang bán -->
+      <a href="/admin/products" class="block bg-white dark:bg-zinc-900 p-5 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm hover:border-amber-500/50 hover:shadow-md transition transform hover:-translate-y-0.5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">3. Sản phẩm đang bán</span>
+          <span class="text-lg">🪑</span>
+        </div>
+        <div id="statProducts" class="text-2xl font-black text-amber-700 dark:text-amber-400 mt-2">0</div>
+        <div class="text-[11px] text-gray-400 mt-1">Bấm để quản lý kho &rarr;</div>
+      </a>
+
+      <!-- Card 4: Yêu cầu báo giá B2B -->
+      <a href="/admin/quotes" class="block bg-white dark:bg-zinc-900 p-5 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm hover:border-amber-500/50 hover:shadow-md transition transform hover:-translate-y-0.5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">4. Báo giá dự án B2B</span>
+          <span class="text-lg">📄</span>
+        </div>
+        <div id="statQuotes" class="text-2xl font-black text-blue-600 dark:text-blue-400 mt-2">0</div>
+        <div class="text-[11px] text-gray-400 mt-1">Bấm để xem yêu cầu sỉ &rarr;</div>
+      </a>
+
+    </div>
+
+    <!-- 4 TABS NAVIGATION -->
+    <div class="flex border-b border-gray-200 dark:border-zinc-800 mb-8 gap-6 overflow-x-auto">
+      <a href="/admin/revenue" class="pb-3 text-sm font-bold border-b-2 border-amber-800 text-amber-800 dark:text-amber-400 flex items-center gap-2 whitespace-nowrap">
+        <span>💰 Doanh Thu Tích Lũy</span>
+      </a>
+
+      <a href="/admin/orders" class="pb-3 text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white flex items-center gap-2 whitespace-nowrap">
+        <span>📋 Quản Lý Đơn Hàng</span>
+        <span id="ordersCountBadge" class="bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300 text-xs px-2 py-0.5 rounded-full">0</span>
+      </a>
+
+      <a href="/admin/products" class="pb-3 text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white flex items-center gap-2 whitespace-nowrap">
+        <span>🪑 Quản Lý Sản Phẩm</span>
+        <span id="productsCountBadge" class="bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300 text-xs px-2 py-0.5 rounded-full">0</span>
+      </a>
+
+      <a href="/admin/quotes" class="pb-3 text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white flex items-center gap-2 whitespace-nowrap">
+        <span>📄 Báo Giá Dự Án (B2B)</span>
+        <span id="quotesCountBadge" class="bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 text-xs px-2 py-0.5 rounded-full">0</span>
+      </a>
+    </div>
+
+    <!-- REVENUE ANALYTICS DETAILS -->
+    <div class="space-y-6">
+      
+      <!-- SUB METRICS GRID -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm">
+          <div class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Đã thực thu (Hoàn tất)</div>
+          <div id="revenueCompleted" class="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">0₫</div>
+          <div class="text-[10px] text-gray-400 mt-1"><span id="revenueCompletedCount">0</span> đơn hoàn tất giao hàng</div>
+        </div>
+
+        <div class="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm">
+          <div class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Đang giao (Chờ thu)</div>
+          <div id="revenueShipping" class="text-xl font-bold text-amber-600 dark:text-amber-400 mt-1">0₫</div>
+          <div class="text-[10px] text-gray-400 mt-1">Đang trên đường vận chuyển</div>
+        </div>
+
+        <div class="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm">
+          <div class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Thanh toán chuyển khoản</div>
+          <div id="revenueBank" class="text-xl font-bold text-blue-600 dark:text-blue-400 mt-1">0₫</div>
+          <div class="text-[10px] text-gray-400 mt-1">Qua ngân hàng / QR Pay</div>
+        </div>
+
+        <div class="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm">
+          <div class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Giá trị đơn TB (AOV)</div>
+          <div id="revenueAov" class="text-xl font-bold text-purple-600 dark:text-purple-400 mt-1">0₫</div>
+          <div class="text-[10px] text-gray-400 mt-1">Doanh thu / số đơn mua</div>
+        </div>
+      </div>
+
+      <!-- MAIN REVENUE TRANSACTIONS TABLE -->
+      <div class="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-gray-200 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-bold text-gray-900 dark:text-white">Lịch Sử Giao Dịch Dòng Tiền & Doanh Thu</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Chi tiết số tiền thực nhận từ các đơn đặt hàng trong hệ thống.</p>
+          </div>
+          <button onclick="loadAdminRevenue()" class="text-xs bg-amber-50 dark:bg-zinc-800 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-zinc-700 px-3 py-1.5 rounded-lg hover:bg-amber-100 transition flex items-center gap-1 self-start sm:self-auto font-medium">
+            ⟳ Làm mới dữ liệu
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-gray-600 dark:text-gray-300">
+            <thead class="bg-gray-50 dark:bg-zinc-800/60 uppercase font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-zinc-700">
+              <tr>
+                <th class="p-3.5">Mã đơn & Ngày đặt</th>
+                <th class="p-3.5">Khách hàng</th>
+                <th class="p-3.5">Phương thức</th>
+                <th class="p-3.5">Trạng thái dòng tiền</th>
+                <th class="p-3.5 text-right">Doanh thu (VNĐ)</th>
+              </tr>
+            </thead>
+            <tbody id="adminRevenueTableBody" class="divide-y divide-gray-100 dark:divide-zinc-800">
+              <!-- Loaded via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <div id="toastContainer" class="fixed top-16 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <script src="/static/js/admin.js"></script>
+</body>
+</html>

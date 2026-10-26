@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="vi" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản Lý Sản Phẩm - Quản Trị moccnha</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            moho: {
+              wood: '#a0673d',
+              terracotta: '#c85a32'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪵</text></svg>">
+</head>
+<body class="bg-gray-50 dark:bg-zinc-950 text-gray-800 dark:text-zinc-100 min-h-screen">
+  
+  <!-- ADMIN NAVBAR -->
+  <header class="bg-white dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <a href="/" class="flex items-baseline select-none">
+          <span class="text-2xl font-black text-gray-900 dark:text-white">moccnha</span>
+          <span class="text-2xl font-black text-amber-600">.</span>
+        </a>
+        <span class="bg-amber-100 dark:bg-zinc-800 text-amber-800 dark:text-amber-400 text-xs px-2.5 py-0.5 rounded font-bold uppercase tracking-wider">
+          Admin Portal
+        </span>
+        <span id="db-status-pill" class="text-xs px-2.5 py-0.5 rounded-full font-medium hidden"></span>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <button 
+          type="button" 
+          onclick="toggleTheme()" 
+          class="theme-toggle-btn p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-600 dark:text-yellow-400 transition" 
+          title="Đổi giao diện"
+        >
+          <svg class="sun-icon w-5 h-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg class="moon-icon w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+
+        <a href="/" class="text-xs text-amber-800 dark:text-amber-400 font-semibold hover:underline flex items-center gap-1">
+          &larr; Xem cửa hàng moccnha
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+    
+    <!-- 4 CORE METRICS CARDS -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+      
+      <!-- Card 1: Doanh thu tích lũy -->
+      <a href="/admin/revenue" class="block bg-white dark:bg-zinc-900 p-5 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm hover:border-amber-500/50 hover:shadow-md transition transform hover:-translate-y-0.5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">1. Doanh thu tích lũy</span>
+          <span class="text-lg">💰</span>
+        </div>
+        <div id="statRevenue" class="text-2xl font-black text-red-600 dark:text-red-400 mt-2">0₫</div>
+        <div class="text-[11px] text-gray-400 mt-1">Bấm để xem báo cáo &rarr;</div>
+      </a>
+
+      <!-- Card 2: Tổng đơn đặt hàng -->
+      <a href="/admin/orders" class="block bg-white dark:bg-zinc-900 p-5 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm hover:border-amber-500/50 hover:shadow-md transition transform hover:-translate-y-0.5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">2. Tổng đơn đặt hàng</span>
+          <span class="text-lg">📦</span>
+        </div>
+        <div id="statOrders" class="text-2xl font-black text-gray-900 dark:text-white mt-2">0</div>
+        <div class="text-[11px] text-gray-400 mt-1">Bấm để quản lý đơn &rarr;</div>
+      </a>
+
+      <!-- Card 3: Sản phẩm đang bán (Active) -->
+      <a href="/admin/products" class="block bg-white dark:bg-zinc-900 p-5 rounded-xl border-2 border-amber-600 dark:border-amber-500 shadow-md ring-2 ring-amber-500/20 transition transform hover:-translate-y-0.5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">3. Sản phẩm đang bán</span>
+          <span class="text-lg">🪑</span>
+        </div>
+        <div id="statProducts" class="text-2xl font-black text-amber-700 dark:text-amber-400 mt-2">0</div>
+        <div class="text-[11px] text-green-600 dark:text-green-400 mt-1 flex items-center gap-1">
+          <span>●</span> Đang xem trang này
+        </div>
+      </a>
+
+      <!-- Card 4: Yêu cầu báo giá B2B -->
+      <a href="/admin/quotes" class="block bg-white dark:bg-zinc-900 p-5 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm hover:border-amber-500/50 hover:shadow-md transition transform hover:-translate-y-0.5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">4. Báo giá dự án B2B</span>
+          <span class="text-lg">📄</span>
+        </div>
+        <div id="statQuotes" class="text-2xl font-black text-blue-600 dark:text-blue-400 mt-2">0</div>
+        <div class="text-[11px] text-gray-400 mt-1">Bấm để xem yêu cầu sỉ &rarr;</div>
+      </a>
+
+    </div>
+
+    <!-- 4 TABS NAVIGATION -->
+    <div class="flex border-b border-gray-200 dark:border-zinc-800 mb-8 gap-6 overflow-x-auto">
+      <a href="/admin/revenue" class="pb-3 text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white flex items-center gap-2 whitespace-nowrap">
+        <span>💰 Doanh Thu Tích Lũy</span>
+      </a>
+
+      <a href="/admin/orders" class="pb-3 text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white flex items-center gap-2 whitespace-nowrap">
+        <span>📋 Quản Lý Đơn Hàng</span>
+        <span id="ordersCountBadge" class="bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300 text-xs px-2 py-0.5 rounded-full">0</span>
+      </a>
+
+      <a href="/admin/products" class="pb-3 text-sm font-bold border-b-2 border-amber-800 text-amber-800 dark:text-amber-400 flex items-center gap-2 whitespace-nowrap">
+        <span>🪑 Quản Lý Sản Phẩm</span>
+        <span id="productsCountBadge" class="bg-amber-100 dark:bg-zinc-800 text-amber-900 dark:text-amber-300 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+      </a>
+
+      <a href="/admin/quotes" class="pb-3 text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white flex items-center gap-2 whitespace-nowrap">
+        <span>📄 Báo Giá Dự Án (B2B)</span>
+        <span id="quotesCountBadge" class="bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 text-xs px-2 py-0.5 rounded-full">0</span>
+      </a>
+    </div>
+
+    <!-- PRODUCTS CONTENT -->
+    <div class="space-y-6">
+      
+      <!-- Add Product Form Card -->
+      <div class="bg-white dark:bg-zinc-900 p-6 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm">
+        <h3 class="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <span>➕ Thêm Sản Phẩm Nội Thất Mới Vào Cửa Hàng</span>
+        </h3>
+        
+        <form onsubmit="handleCreateProduct(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold mb-1">Tên sản phẩm *</label>
+            <input name="title" required type="text" placeholder="Ví dụ: Tủ Giày Gỗ Thông VLINE 2 Cánh" class="w-full px-3 py-2 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-white focus:outline-none focus:border-amber-700" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold mb-1">Danh mục *</label>
+            <select name="category" required class="w-full px-3 py-2 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-white focus:outline-none focus:border-amber-700">
+              <option value="Phòng Khách">Phòng Khách</option>
+              <option value="Phòng Ngủ">Phòng Ngủ</option>
+              <option value="Phòng Ăn">Phòng Ăn</option>
+              <option value="Phòng Làm Việc">Phòng Làm Việc</option>
+              <option value="Tủ & Kệ">Tủ & Kệ</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold mb-1">Giá bán (VNĐ) *</label>
+            <input name="price" required type="number" placeholder="6990000" class="w-full px-3 py-2 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-white focus:outline-none focus:border-amber-700" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold mb-1">Giá gốc niêm yết (VNĐ)</label>
+            <input name="original_price" type="number" placeholder="8990000" class="w-full px-3 py-2 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-white focus:outline-none focus:border-amber-700" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold mb-1">% Giảm giá</label>
+            <input name="discount_percent" type="number" placeholder="22" class="w-full px-3 py-2 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-white focus:outline-none focus:border-amber-700" />
+          </div>
+
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold mb-1">Link Ảnh Sản Phẩm (URL)</label>
+            <input name="image" type="url" placeholder="https://images.unsplash.com/photo-..." class="w-full px-3 py-2 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-white focus:outline-none focus:border-amber-700" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold mb-1">Bộ sưu tập</label>
+            <input name="collection" type="text" placeholder="VLINE, HOBRO, MILAN" class="w-full px-3 py-2 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-white focus:outline-none focus:border-amber-700" />
+          </div>
+
+          <div class="sm:col-span-3">
+            <label class="block text-xs font-semibold mb-1">Mô tả sản phẩm</label>
+            <textarea name="description" rows="2" placeholder="Thông số chất liệu, tính năng nổi bật..." class="w-full px-3 py-2 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-white focus:outline-none focus:border-amber-700"></textarea>
+          </div>
+
+          <div class="sm:col-span-3 flex justify-end">
+            <button type="submit" class="bg-amber-800 hover:bg-amber-900 text-white font-semibold text-xs px-6 py-2.5 rounded shadow transition">
+              Lưu Sản Phẩm Mới
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Products List Table Card -->
+      <div class="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-gray-200 dark:border-zinc-800 flex justify-between items-center">
+          <div>
+            <h3 class="text-sm font-bold text-gray-900 dark:text-white">Kho Sản Phẩm moccnha</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Danh sách các mặt hàng đang được trưng bày và bán trên website.</p>
+          </div>
+          <button onclick="loadAdminProducts()" class="text-xs bg-amber-50 dark:bg-zinc-800 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-zinc-700 px-3 py-1.5 rounded-lg hover:bg-amber-100 transition flex items-center gap-1 font-medium">
+            ⟳ Làm mới kho hàng
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-gray-600 dark:text-gray-300">
+            <thead class="bg-gray-50 dark:bg-zinc-800/60 uppercase font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-zinc-700">
+              <tr>
+                <th class="p-3.5">ID</th>
+                <th class="p-3.5">Hình ảnh</th>
+                <th class="p-3.5">Tên sản phẩm</th>
+                <th class="p-3.5">Danh mục</th>
+                <th class="p-3.5">Giá bán</th>
+                <th class="p-3.5">Đã bán</th>
+                <th class="p-3.5">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="adminProductsTableBody" class="divide-y divide-gray-100 dark:divide-zinc-800">
+              <!-- Loaded via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <div id="toastContainer" class="fixed top-16 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <script src="/static/js/admin.js"></script>
+</body>
+</html>

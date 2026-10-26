@@ -114,6 +114,20 @@ def _init_db_internal():
         )
     ''')
 
+    # Create Quotes table (Yêu cầu báo giá dự án B2B)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS quotes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            fullname TEXT NOT NULL,
+            phone TEXT NOT NULL,
+            email TEXT,
+            project_type TEXT,
+            note TEXT,
+            status TEXT DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
     conn.commit()
 
     # Check if we need to seed initial data

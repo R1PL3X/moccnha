@@ -95,10 +95,12 @@ class MohoStoreTestCase(unittest.TestCase):
         self.assertTrue(data['success'])
         self.assertEqual(data['user']['role'], 'admin')
 
-    def test_admin_page(self):
-        res = self.client.get('/admin')
-        self.assertEqual(res.status_code, 200)
-        content = res.data.decode('utf-8')
+    def test_admin_pages(self):
+        for route in ['/admin', '/admin/revenue', '/admin/orders', '/admin/products', '/admin/quotes']:
+            res = self.client.get(route)
+            self.assertEqual(res.status_code, 200, f"Route {route} failed")
+            content = res.data.decode('utf-8')
+            self.assertIn('Admin Portal', content)
     def test_db_status(self):
         res = self.client.get('/api/db-status')
         self.assertEqual(res.status_code, 200)
@@ -118,6 +120,51 @@ class MohoStoreTestCase(unittest.TestCase):
             self.assertEqual(res.status_code, 200, f"Route {route} failed")
             content = res.data.decode('utf-8')
             self.assertIn('moccnha', content)
+
+    def test_quotes_flow(self):
+        # 1. Test creating quote
+        quote_payload = {
+            'fullname': 'Trần Thị B',
+            'phone': '0909888999',
+            'email': 'b2b@company.vn',
+            'project_type': 'Khách sạn / Homestay / Resort',
+            'note': 'Cần báo giá 15 bộ combo HOBRO 1m6'
+        }
+        create_res = self.client.post(
+            '/api/quotes',
+            data=json.dumps(quote_payload),
+            content_type='application/json'
+        )
+        self.assertEqual(create_res.status_code, 201)
+        create_data = json.loads(create_res.data)
+        self.assertTrue(create_data['success'])
+        quote_id = create_data['id']
+
+        # 2. Test get quotes list
+        get_res = self.client.get('/api/quotes')
+        self.assertEqual(get_res.status_code, 200)
+        quotes = json.loads(get_res.data)
+        self.assertTrue(any(q['id'] == quote_id for q in quotes))
+
+        # 3. Test update status
+        patch_res = self.client.patch(
+            f'/api/quotes/{quote_id}/status',
+            data=json.dumps({'status': 'contacted'}),
+            content_type='application/json'
+        )
+        self.assertEqual(patch_res.status_code, 200)
+
+        # 4. Test missing required fields
+        invalid_res = self.client.post(
+            '/api/quotes',
+            data=json.dumps({'fullname': ''}),
+            content_type='application/json'
+        )
+        self.assertEqual(invalid_res.status_code, 400)
+
+        # 5. Test delete quote
+        del_res = self.client.delete(f'/api/quotes/{quote_id}')
+        self.assertEqual(del_res.status_code, 200)
 
 if __name__ == '__main__':
     unittest.main()
