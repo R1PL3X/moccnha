@@ -601,6 +601,51 @@ function renderCart() {
   `).join('');
 }
 
+// --- SIDE MENU (LEFT DRAWER - THU MỞ) ---
+function openSideMenu() {
+  const drawer = document.getElementById('sideMenuDrawer');
+  const panel = document.getElementById('sideMenuPanel');
+  if (drawer && panel) {
+    drawer.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+    setTimeout(() => {
+      drawer.classList.remove('opacity-0');
+      panel.firstElementChild?.classList.remove('-translate-x-full');
+    }, 10);
+  }
+}
+
+function closeSideMenu() {
+  const drawer = document.getElementById('sideMenuDrawer');
+  const panel = document.getElementById('sideMenuPanel');
+  if (drawer && panel) {
+    panel.firstElementChild?.classList.add('-translate-x-full');
+    drawer.classList.add('opacity-0');
+    document.body.classList.remove('overflow-hidden');
+    setTimeout(() => {
+      drawer.classList.add('hidden');
+    }, 300);
+  }
+}
+
+function toggleSideMenu() {
+  const drawer = document.getElementById('sideMenuDrawer');
+  if (drawer && !drawer.classList.contains('hidden') && !drawer.classList.contains('opacity-0')) {
+    closeSideMenu();
+  } else {
+    openSideMenu();
+  }
+}
+
+function filterCategoryFromMenu(catName) {
+  closeSideMenu();
+  if (window.location.pathname !== '/' && window.location.pathname !== '') {
+    window.location.href = `/?category=${encodeURIComponent(catName)}`;
+  } else {
+    filterCategory(catName);
+  }
+}
+
 function openCartDrawer() {
   const drawer = document.getElementById('cartDrawer');
   const panel = document.getElementById('cartDrawerPanel');
