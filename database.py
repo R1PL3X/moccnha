@@ -1,22 +1,29 @@
 import sqlite3
 import os
 import json
+import tempfile
 
 is_vercel = os.environ.get('VERCEL') == '1' or 'VERCEL' in os.environ
 if is_vercel:
-    DB_FILE = '/tmp/moho_store.db'
+    DB_FILE = os.path.join(tempfile.gettempdir(), 'moho_store.db')
 else:
     DB_FILE = os.path.join(os.path.dirname(__file__), 'moho_store.db')
 
 def get_db_connection():
     try:
+        os.makedirs(os.path.dirname(os.path.abspath(DB_FILE)), exist_ok=True)
         conn = sqlite3.connect(DB_FILE)
         conn.row_factory = sqlite3.Row
         return conn
     except Exception:
-        conn = sqlite3.connect(':memory:')
-        conn.row_factory = sqlite3.Row
-        return conn
+        try:
+            conn = sqlite3.connect('file:mem_moho_db?mode=memory&cache=shared', uri=True)
+            conn.row_factory = sqlite3.Row
+            return conn
+        except Exception:
+            conn = sqlite3.connect(':memory:')
+            conn.row_factory = sqlite3.Row
+            return conn
 
 _db_initialized = False
 

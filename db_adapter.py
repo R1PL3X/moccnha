@@ -32,16 +32,13 @@ def init_supabase():
     global supabase_client, _using_supabase
     if SUPABASE_URL and SUPABASE_KEY and SUPABASE_URL.startswith('http'):
         try:
-            from supabase import create_client, Client
+            from supabase import create_client
             supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
-            # Lightweight verification ping
-            supabase_client.table('categories').select('id').limit(1).execute()
             _using_supabase = True
-            print(f"[DB ADAPTER] -> Successfully connected to Supabase Cloud Database: {SUPABASE_URL}")
+            print(f"[DB ADAPTER] -> Initialized Supabase client for: {SUPABASE_URL}")
             return True
         except Exception as e:
-            print(f"[DB ADAPTER] -> Supabase connection attempt failed: {e}")
-            print("[DB ADAPTER] -> Falling back to local SQLite database (moho_store.db)")
+            print(f"[DB ADAPTER] -> Supabase client init failed: {e}")
             _using_supabase = False
             supabase_client = None
             return False
