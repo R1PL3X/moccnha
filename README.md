@@ -76,7 +76,7 @@ Dự án này đã được cấu hình sẵn để triển khai dễ dàng:
 
 *   **Vercel:** Sử dụng file `vercel.json` và thư mục `api/` để deploy dạng Serverless Functions.
 *   **Heroku / Render:** Sử dụng `Procfile` (chạy qua lệnh `web: gunicorn app:app`).
-Ứng dụng bản chính thức đang hoạt động tại [https://moccnha.vercel.app/](https://moccnha.vercel.app/)
+Ứng dụng bản chính thức đang hoạt động tại [https://moccnha-we1cyw4v4-r1pl3x.vercel.app/](https://moccnha-we1cyw4v4-r1pl3x.vercel.app/)
 
 ## 📁 Cấu trúc thư mục chính
 
