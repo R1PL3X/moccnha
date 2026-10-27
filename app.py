@@ -11,6 +11,7 @@ except ImportError:
     pass
 
 import db_adapter
+import chat_advisor
 from database import init_db
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -126,6 +127,10 @@ def admin_products_page():
 @app.route('/admin/quotes')
 def admin_quotes_page():
     return render_template('admin_quotes.html')
+
+@app.route('/admin/chats')
+def admin_chats_page():
+    return render_template('admin_chats.html')
 
 @app.errorhandler(404)
 def not_found(e):
@@ -371,6 +376,113 @@ def login():
         })
     else:
         return jsonify({'error': 'Email hoặc mật khẩu không chính xác'}), 401
+
+# ==============================================================================
+# CHAT CONSULTATION & ADVISOR ENDPOINTS
+# ==============================================================================
+
+@app.route('/api/chat/history', methods=['GET'])
+def get_chat_history():
+    session_id = request.args.get('session_id')
+    if not session_id:
+        return jsonify({'error': 'Thiếu session_id'}), 400
+    messages = db_adapter.get_chat_history(session_id)
+    return jsonify({
+        'session_id': session_id,
+        'messages': messages
+    })
+
+@app.route('/api/chat/send', methods=['POST'])
+def send_chat_message():
+    data = request.get_json() or {}
+    session_id = data.get('session_id')
+    message = (data.get('message') or '').strip()
+    customer_name = data.get('customer_name')
+    customer_phone = data.get('customer_phone')
+    customer_email = data.get('customer_email')
+    user_id = data.get('user_id')
+
+    if not session_id or not message:
+        return jsonify({'error': 'Thiếu session_id hoặc nội dung tin nhắn'}), 400
+
+    # 1. Save customer message to DB
+    db_adapter.save_chat_message(
+        session_id=session_id,
+        sender='customer',
+        message=message,
+        user_id=user_id,
+        customer_name=customer_name,
+        customer_phone=customer_phone,
+        customer_email=customer_email
+    )
+
+    # 2. Generate automated advisor response
+    try:
+        reply = chat_advisor.generate_advisor_reply(message, session_id)
+    except Exception as e:
+        reply = "Dạ moccnha đã nhận được tin nhắn của Quý khách! Chuyên viên tư vấn sẽ liên hệ hỗ trợ bạn ngay trong ít phút ạ!"
+
+    # 3. Save advisor response to DB
+    db_adapter.save_chat_message(
+        session_id=session_id,
+        sender='advisor',
+        message=reply,
+        user_id=None,
+        customer_name='Tư vấn viên moccnha'
+    )
+
+    # 4. Fetch updated history
+    messages = db_adapter.get_chat_history(session_id)
+
+    return jsonify({
+        'success': True,
+        'reply': reply,
+        'messages': messages
+    })
+
+# --- ADMIN CHAT MANAGEMENT ---
+@app.route('/api/admin/chat/sessions', methods=['GET'])
+def admin_get_chat_sessions():
+    sessions = db_adapter.get_chat_sessions()
+    return jsonify(sessions)
+
+@app.route('/api/admin/chat/sessions/<string:session_id>', methods=['GET'])
+def admin_get_chat_history(session_id):
+    db_adapter.mark_chat_read(session_id)
+    messages = db_adapter.get_chat_history(session_id)
+    return jsonify({
+        'session_id': session_id,
+        'messages': messages
+    })
+
+@app.route('/api/admin/chat/reply', methods=['POST'])
+def admin_chat_reply():
+    data = request.get_json() or {}
+    session_id = data.get('session_id')
+    message = (data.get('message') or '').strip()
+
+    if not session_id or not message:
+        return jsonify({'error': 'Thiếu session_id hoặc tin nhắn'}), 400
+
+    db_adapter.save_chat_message(
+        session_id=session_id,
+        sender='advisor',
+        message=message,
+        customer_name='Quản trị viên'
+    )
+    db_adapter.mark_chat_read(session_id)
+
+    messages = db_adapter.get_chat_history(session_id)
+    return jsonify({
+        'success': True,
+        'message': 'Đã gửi phản hồi thành công',
+        'messages': messages
+    })
+
+@app.route('/api/admin/chat/sessions/<string:session_id>', methods=['DELETE'])
+def admin_delete_chat_session(session_id):
+    db_adapter.delete_chat_session(session_id)
+    return jsonify({'success': True, 'message': 'Đã xóa đoạn hội thoại'})
 
 @app.after_request
 def add_no_cache_headers(response):

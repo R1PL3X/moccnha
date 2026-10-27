@@ -711,12 +711,24 @@ def get_stats():
             # Count quotes
             q_res = supabase_client.table('quotes').select('id', count='exact').execute()
             total_quotes = q_res.count if q_res.count is not None else len(q_res.data or [])
+
+            # Count chats
+            try:
+                c_res = supabase_client.table('chat_sessions').select('unread_count').execute()
+                sessions = c_res.data or []
+                total_chats = len(sessions)
+                unread_chats = sum(1 for s in sessions if (s.get('unread_count') or 0) > 0)
+            except Exception:
+                total_chats = 0
+                unread_chats = 0
             
             return {
                 'total_products': total_products,
                 'total_orders': total_orders,
                 'total_revenue': total_revenue,
-                'total_quotes': total_quotes
+                'total_quotes': total_quotes,
+                'total_chats': total_chats,
+                'unread_chats': unread_chats
             }
         except Exception as e:
             logger.error(f"Supabase get_stats error: {e}")
@@ -731,12 +743,22 @@ def get_stats():
         total_quotes = conn.execute('SELECT COUNT(*) FROM quotes').fetchone()[0]
     except Exception:
         total_quotes = 0
+
+    try:
+        total_chats = conn.execute('SELECT COUNT(*) FROM chat_sessions').fetchone()[0]
+        unread_chats = conn.execute('SELECT COUNT(*) FROM chat_sessions WHERE unread_count > 0').fetchone()[0]
+    except Exception:
+        total_chats = 0
+        unread_chats = 0
+
     conn.close()
     return {
         'total_products': total_products,
         'total_orders': total_orders,
         'total_revenue': total_revenue,
-        'total_quotes': total_quotes
+        'total_quotes': total_quotes,
+        'total_chats': total_chats,
+        'unread_chats': unread_chats
     }
 
 def register_user(fullname, email, phone, password):
@@ -825,3 +847,162 @@ def authenticate_user(email, password):
             'role': user['role']
         }
     return None
+
+# ==============================================================================
+# CHAT CONSULTATION DATA ACCESS FUNCTIONS
+# ==============================================================================
+
+def save_chat_message(session_id, sender, message, user_id=None, customer_name=None, customer_phone=None, customer_email=None):
+    """
+    Save a chat message and update/create the corresponding chat session.
+    Sender can be 'customer' or 'advisor'.
+    """
+    if is_supabase_enabled():
+        try:
+            # 1. Upsert session
+            s_res = supabase_client.table('chat_sessions').select('*').eq('session_id', session_id).execute()
+            sess = s_res.data[0] if s_res.data and len(s_res.data) > 0 else None
+            
+            s_payload = {
+                'session_id': session_id,
+                'last_message': message[:200],
+                'updated_at': 'now()'
+            }
+            if customer_name:
+                s_payload['customer_name'] = customer_name
+            if customer_phone:
+                s_payload['customer_phone'] = customer_phone
+            if customer_email:
+                s_payload['customer_email'] = customer_email
+
+            if sess:
+                if sender == 'customer':
+                    s_payload['unread_count'] = (sess.get('unread_count') or 0) + 1
+                supabase_client.table('chat_sessions').update(s_payload).eq('session_id', session_id).execute()
+            else:
+                s_payload['unread_count'] = 1 if sender == 'customer' else 0
+                s_payload['status'] = 'active'
+                if not customer_name:
+                    s_payload['customer_name'] = 'Khách hàng'
+                supabase_client.table('chat_sessions').insert(s_payload).execute()
+
+            # 2. Insert message
+            msg_payload = {
+                'session_id': session_id,
+                'sender': sender,
+                'message': message,
+                'user_id': user_id,
+                'customer_name': customer_name or 'Khách hàng'
+            }
+            supabase_client.table('chat_messages').insert(msg_payload).execute()
+            return True
+        except Exception as e:
+            logger.error(f"Supabase save_chat_message error: {e}")
+            pass
+
+    # SQLite Fallback
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # 1. Upsert session
+    s_row = cursor.execute('SELECT * FROM chat_sessions WHERE session_id = ?', (session_id,)).fetchone()
+    if s_row:
+        new_unread = (s_row['unread_count'] or 0) + 1 if sender == 'customer' else s_row['unread_count']
+        cursor.execute('''
+            UPDATE chat_sessions 
+            SET last_message = ?, 
+                unread_count = ?, 
+                customer_name = COALESCE(?, customer_name),
+                customer_phone = COALESCE(?, customer_phone),
+                customer_email = COALESCE(?, customer_email),
+                updated_at = CURRENT_TIMESTAMP
+            WHERE session_id = ?
+        ''', (message[:200], new_unread, customer_name, customer_phone, customer_email, session_id))
+    else:
+        init_unread = 1 if sender == 'customer' else 0
+        cursor.execute('''
+            INSERT INTO chat_sessions (
+                session_id, customer_name, customer_phone, customer_email, last_message, unread_count, status
+            ) VALUES (?, ?, ?, ?, ?, ?, 'active')
+        ''', (session_id, customer_name or 'Khách hàng', customer_phone, customer_email, message[:200], init_unread))
+
+    # 2. Insert message
+    cursor.execute('''
+        INSERT INTO chat_messages (session_id, user_id, customer_name, sender, message)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (session_id, user_id, customer_name or 'Khách hàng', sender, message))
+
+    conn.commit()
+    conn.close()
+    return True
+
+def get_chat_history(session_id):
+    """Retrieve full message history for a specific chat session"""
+    if is_supabase_enabled():
+        try:
+            res = supabase_client.table('chat_messages').select('*').eq('session_id', session_id).order('created_at', desc=False).execute()
+            return res.data or []
+        except Exception as e:
+            logger.error(f"Supabase get_chat_history error: {e}")
+            pass
+
+    # SQLite Fallback
+    conn = get_db_connection()
+    rows = conn.execute('SELECT * FROM chat_messages WHERE session_id = ? ORDER BY id ASC', (session_id,)).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+def get_chat_sessions():
+    """Retrieve all chat sessions for admin consultation dashboard"""
+    if is_supabase_enabled():
+        try:
+            res = supabase_client.table('chat_sessions').select('*').order('updated_at', desc=True).execute()
+            return res.data or []
+        except Exception as e:
+            logger.error(f"Supabase get_chat_sessions error: {e}")
+            pass
+
+    # SQLite Fallback
+    conn = get_db_connection()
+    try:
+        rows = conn.execute('SELECT * FROM chat_sessions ORDER BY updated_at DESC').fetchall()
+    except Exception:
+        rows = []
+    conn.close()
+    return [dict(r) for r in rows]
+
+def mark_chat_read(session_id):
+    """Mark a chat session as read by admin"""
+    if is_supabase_enabled():
+        try:
+            supabase_client.table('chat_sessions').update({'unread_count': 0}).eq('session_id', session_id).execute()
+            return True
+        except Exception as e:
+            logger.error(f"Supabase mark_chat_read error: {e}")
+            pass
+
+    # SQLite Fallback
+    conn = get_db_connection()
+    conn.execute('UPDATE chat_sessions SET unread_count = 0 WHERE session_id = ?', (session_id,))
+    conn.commit()
+    conn.close()
+    return True
+
+def delete_chat_session(session_id):
+    """Delete a chat session and its messages"""
+    if is_supabase_enabled():
+        try:
+            supabase_client.table('chat_messages').delete().eq('session_id', session_id).execute()
+            supabase_client.table('chat_sessions').delete().eq('session_id', session_id).execute()
+            return True
+        except Exception as e:
+            logger.error(f"Supabase delete_chat_session error: {e}")
+            pass
+
+    # SQLite Fallback
+    conn = get_db_connection()
+    conn.execute('DELETE FROM chat_messages WHERE session_id = ?', (session_id,))
+    conn.execute('DELETE FROM chat_sessions WHERE session_id = ?', (session_id,))
+    conn.commit()
+    conn.close()
+    return True

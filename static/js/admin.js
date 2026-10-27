@@ -111,6 +111,9 @@ async function loadAdminStats() {
 
     const elQuotesBadge = document.getElementById('quotesCountBadge');
     if (elQuotesBadge) elQuotesBadge.textContent = data.total_quotes || 0;
+
+    const elChatsBadge = document.getElementById('chatsCountBadge');
+    if (elChatsBadge) elChatsBadge.textContent = data.unread_chats || data.total_chats || 0;
   } catch (err) {
     console.error(err);
   }
@@ -669,6 +672,218 @@ async function updateQuoteStatus(quoteId, newStatus) {
   }
 }
 
+// ==============================================================================
+// 5. TƯ VẤN KHÁCH HÀNG (ADMIN CHATBOX SESSIONS)
+// ==============================================================================
+
+let ADMIN_CHAT_SESSIONS = [];
+let ACTIVE_ADMIN_SESSION_ID = null;
+
+async function loadAdminChatSessions() {
+  const container = document.getElementById('adminChatSessionsList');
+  if (!container) return;
+
+  try {
+    const res = await fetch('/api/admin/chat/sessions');
+    const sessions = await res.json() || [];
+    ADMIN_CHAT_SESSIONS = sessions;
+
+    const countEl = document.getElementById('adminSessionCount');
+    if (countEl) countEl.textContent = sessions.length;
+
+    if (sessions.length === 0) {
+      container.innerHTML = `
+        <div class="p-8 text-center text-gray-400 text-xs">
+          <span class="text-2xl block mb-1">📭</span>
+          Chưa có khách hàng nào gửi tin nhắn tư vấn.
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = sessions.map(sess => {
+      const isActive = sess.session_id === ACTIVE_ADMIN_SESSION_ID;
+      const unread = sess.unread_count || 0;
+      const timeStr = sess.updated_at ? new Date(sess.updated_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '';
+
+      return `
+        <div 
+          onclick="selectAdminChatSession('${sess.session_id}')" 
+          class="p-3.5 hover:bg-white dark:hover:bg-zinc-800/80 cursor-pointer transition flex items-start gap-3 ${isActive ? 'bg-amber-50 dark:bg-amber-950/40 border-l-4 border-amber-800 dark:border-amber-500' : ''}"
+        >
+          <div class="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-400 font-bold flex items-center justify-center text-xs flex-shrink-0 mt-0.5">
+            ${(sess.customer_name || 'K').charAt(0).toUpperCase()}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-1">
+              <div class="font-bold text-xs text-gray-900 dark:text-white truncate">
+                ${sess.customer_name || 'Khách hàng'}
+              </div>
+              <span class="text-[10px] text-gray-400 flex-shrink-0">${timeStr}</span>
+            </div>
+            <div class="text-[11px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
+              ${sess.last_message || 'Bắt đầu cuộc hội thoại'}
+            </div>
+            ${sess.customer_phone ? `<div class="text-[10px] text-amber-700 dark:text-amber-400 mt-0.5">📞 ${sess.customer_phone}</div>` : ''}
+          </div>
+          ${unread > 0 ? `<span class="bg-amber-700 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0">${unread}</span>` : ''}
+        </div>
+      `;
+    }).join('');
+
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = `<div class="p-4 text-center text-red-500 text-xs">Lỗi khi tải danh sách hội thoại</div>`;
+  }
+}
+
+async function selectAdminChatSession(sessionId) {
+  ACTIVE_ADMIN_SESSION_ID = sessionId;
+  const sess = ADMIN_CHAT_SESSIONS.find(s => s.session_id === sessionId);
+  
+  // Update header info
+  const nameEl = document.getElementById('adminActiveCustomerName');
+  const metaEl = document.getElementById('adminActiveSessionMeta');
+  const actionsEl = document.getElementById('adminChatActions');
+  const inputEl = document.getElementById('adminReplyInput');
+  const btnEl = document.getElementById('adminReplySendBtn');
+
+  if (nameEl) nameEl.textContent = sess ? (sess.customer_name || 'Khách hàng') : 'Khách hàng';
+  if (metaEl) {
+    metaEl.textContent = `Mã phiên: ${sessionId} ${sess && sess.customer_phone ? ' • 📞 ' + sess.customer_phone : ''}`;
+  }
+  if (actionsEl) actionsEl.classList.remove('hidden');
+  if (inputEl) {
+    inputEl.disabled = false;
+    inputEl.placeholder = `Nhập câu trả lời gửi đến ${sess ? (sess.customer_name || 'Khách') : 'khách'}...`;
+    inputEl.focus();
+  }
+  if (btnEl) btnEl.disabled = false;
+
+  // Refresh left sidebar to show active state and clear unread badge
+  loadAdminChatSessions();
+
+  // Load message history
+  const messagesArea = document.getElementById('adminChatMessagesArea');
+  if (messagesArea) {
+    messagesArea.innerHTML = `<div class="p-4 text-center text-gray-400 text-xs">Đang tải lịch sử tin nhắn...</div>`;
+    try {
+      const res = await fetch(`/api/admin/chat/sessions/${encodeURIComponent(sessionId)}`);
+      const data = await res.json();
+      const messages = data.messages || [];
+
+      if (messages.length === 0) {
+        messagesArea.innerHTML = `<div class="p-8 text-center text-gray-400 text-xs">Chưa có tin nhắn nào trong phiên này.</div>`;
+        return;
+      }
+
+      messagesArea.innerHTML = messages.map(msg => {
+        const isCustomer = msg.sender === 'customer';
+        const timeStr = msg.created_at ? new Date(msg.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '';
+        
+        if (isCustomer) {
+          return `
+            <div class="flex items-start gap-2 max-w-[80%] self-start">
+              <div class="w-6 h-6 rounded-full bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-zinc-200 flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">
+                ${(msg.customer_name || 'K').charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <div class="bg-gray-100 dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 p-3 rounded-2xl rounded-tl-xs shadow-2xs leading-relaxed break-words">
+                  ${msg.message.replace(/\n/g, '<br>')}
+                </div>
+                <div class="text-[10px] text-gray-400 mt-1 pl-1">${msg.customer_name || 'Khách hàng'} • ${timeStr}</div>
+              </div>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="flex items-start justify-end gap-2 max-w-[80%] self-end ml-auto">
+              <div>
+                <div class="bg-amber-800 text-white p-3 rounded-2xl rounded-tr-xs shadow-2xs leading-relaxed break-words">
+                  ${msg.message.replace(/\n/g, '<br>')}
+                </div>
+                <div class="text-[10px] text-gray-400 mt-1 pr-1 text-right">Tư vấn viên (moccnha) • ${timeStr}</div>
+              </div>
+              <div class="w-6 h-6 rounded-full bg-amber-800 text-white flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">
+                M
+              </div>
+            </div>
+          `;
+        }
+      }).join('');
+
+      messagesArea.scrollTop = messagesArea.scrollHeight;
+
+    } catch (err) {
+      console.error(err);
+      messagesArea.innerHTML = `<div class="p-4 text-center text-red-500 text-xs">Lỗi khi tải tin nhắn</div>`;
+    }
+  }
+}
+
+async function handleAdminSendReply(e) {
+  e.preventDefault();
+  if (!ACTIVE_ADMIN_SESSION_ID) return;
+
+  const input = document.getElementById('adminReplyInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  input.value = '';
+
+  try {
+    const res = await fetch('/api/admin/chat/reply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id: ACTIVE_ADMIN_SESSION_ID,
+        message: msg
+      })
+    });
+
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast('Đã gửi tin nhắn tư vấn thành công!', 'success');
+      selectAdminChatSession(ACTIVE_ADMIN_SESSION_ID);
+    } else {
+      showToast(data.error || 'Gửi tin nhắn thất bại', 'error');
+    }
+  } catch (err) {
+    showToast('Lỗi mạng', 'error');
+  }
+}
+
+async function deleteCurrentChatSession() {
+  if (!ACTIVE_ADMIN_SESSION_ID) return;
+  if (!confirm('Bạn có chắc chắn muốn xóa toàn bộ cuộc hội thoại này?')) return;
+
+  try {
+    const res = await fetch(`/api/admin/chat/sessions/${encodeURIComponent(ACTIVE_ADMIN_SESSION_ID)}`, {
+      method: 'DELETE'
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast('Đã xóa cuộc hội thoại', 'info');
+      ACTIVE_ADMIN_SESSION_ID = null;
+      document.getElementById('adminActiveCustomerName').textContent = 'Chọn một cuộc hội thoại từ danh sách';
+      document.getElementById('adminActiveSessionMeta').textContent = 'Chưa chọn cuộc hội thoại nào';
+      document.getElementById('adminChatActions').classList.add('hidden');
+      document.getElementById('adminReplyInput').disabled = true;
+      document.getElementById('adminReplySendBtn').disabled = true;
+      document.getElementById('adminChatMessagesArea').innerHTML = `
+        <div class="h-full flex flex-col items-center justify-center text-gray-400 text-xs">
+          <span class="text-3xl mb-2">💬</span>
+          <p>Vui lòng bấm vào một phiên chat ở cột bên trái để xem lịch sử và trả lời khách hàng.</p>
+        </div>
+      `;
+      loadAdminChatSessions();
+      loadAdminStats();
+    }
+  } catch (err) {
+    showToast('Lỗi khi xóa cuộc hội thoại', 'error');
+  }
+}
+
 async function deleteQuote(quoteId) {
   if (!confirm('Bạn có chắc chắn muốn xóa yêu cầu báo giá này?')) return;
   try {
@@ -683,6 +898,218 @@ async function deleteQuote(quoteId) {
     }
   } catch (err) {
     showToast('Lỗi mạng', 'error');
+  }
+}
+
+// ==============================================================================
+// 5. TƯ VẤN KHÁCH HÀNG (ADMIN CHATBOX SESSIONS)
+// ==============================================================================
+
+let ADMIN_CHAT_SESSIONS = [];
+let ACTIVE_ADMIN_SESSION_ID = null;
+
+async function loadAdminChatSessions() {
+  const container = document.getElementById('adminChatSessionsList');
+  if (!container) return;
+
+  try {
+    const res = await fetch('/api/admin/chat/sessions');
+    const sessions = await res.json() || [];
+    ADMIN_CHAT_SESSIONS = sessions;
+
+    const countEl = document.getElementById('adminSessionCount');
+    if (countEl) countEl.textContent = sessions.length;
+
+    if (sessions.length === 0) {
+      container.innerHTML = `
+        <div class="p-8 text-center text-gray-400 text-xs">
+          <span class="text-2xl block mb-1">📭</span>
+          Chưa có khách hàng nào gửi tin nhắn tư vấn.
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = sessions.map(sess => {
+      const isActive = sess.session_id === ACTIVE_ADMIN_SESSION_ID;
+      const unread = sess.unread_count || 0;
+      const timeStr = sess.updated_at ? new Date(sess.updated_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '';
+
+      return `
+        <div 
+          onclick="selectAdminChatSession('${sess.session_id}')" 
+          class="p-3.5 hover:bg-white dark:hover:bg-zinc-800/80 cursor-pointer transition flex items-start gap-3 ${isActive ? 'bg-amber-50 dark:bg-amber-950/40 border-l-4 border-amber-800 dark:border-amber-500' : ''}"
+        >
+          <div class="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-400 font-bold flex items-center justify-center text-xs flex-shrink-0 mt-0.5">
+            ${(sess.customer_name || 'K').charAt(0).toUpperCase()}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-1">
+              <div class="font-bold text-xs text-gray-900 dark:text-white truncate">
+                ${sess.customer_name || 'Khách hàng'}
+              </div>
+              <span class="text-[10px] text-gray-400 flex-shrink-0">${timeStr}</span>
+            </div>
+            <div class="text-[11px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
+              ${sess.last_message || 'Bắt đầu cuộc hội thoại'}
+            </div>
+            ${sess.customer_phone ? `<div class="text-[10px] text-amber-700 dark:text-amber-400 mt-0.5">📞 ${sess.customer_phone}</div>` : ''}
+          </div>
+          ${unread > 0 ? `<span class="bg-amber-700 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0">${unread}</span>` : ''}
+        </div>
+      `;
+    }).join('');
+
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = `<div class="p-4 text-center text-red-500 text-xs">Lỗi khi tải danh sách hội thoại</div>`;
+  }
+}
+
+async function selectAdminChatSession(sessionId) {
+  ACTIVE_ADMIN_SESSION_ID = sessionId;
+  const sess = ADMIN_CHAT_SESSIONS.find(s => s.session_id === sessionId);
+  
+  // Update header info
+  const nameEl = document.getElementById('adminActiveCustomerName');
+  const metaEl = document.getElementById('adminActiveSessionMeta');
+  const actionsEl = document.getElementById('adminChatActions');
+  const inputEl = document.getElementById('adminReplyInput');
+  const btnEl = document.getElementById('adminReplySendBtn');
+
+  if (nameEl) nameEl.textContent = sess ? (sess.customer_name || 'Khách hàng') : 'Khách hàng';
+  if (metaEl) {
+    metaEl.textContent = `Mã phiên: ${sessionId} ${sess && sess.customer_phone ? ' • 📞 ' + sess.customer_phone : ''}`;
+  }
+  if (actionsEl) actionsEl.classList.remove('hidden');
+  if (inputEl) {
+    inputEl.disabled = false;
+    inputEl.placeholder = `Nhập câu trả lời gửi đến ${sess ? (sess.customer_name || 'Khách') : 'khách'}...`;
+    inputEl.focus();
+  }
+  if (btnEl) btnEl.disabled = false;
+
+  // Refresh left sidebar to show active state and clear unread badge
+  loadAdminChatSessions();
+
+  // Load message history
+  const messagesArea = document.getElementById('adminChatMessagesArea');
+  if (messagesArea) {
+    messagesArea.innerHTML = `<div class="p-4 text-center text-gray-400 text-xs">Đang tải lịch sử tin nhắn...</div>`;
+    try {
+      const res = await fetch(`/api/admin/chat/sessions/${encodeURIComponent(sessionId)}`);
+      const data = await res.json();
+      const messages = data.messages || [];
+
+      if (messages.length === 0) {
+        messagesArea.innerHTML = `<div class="p-8 text-center text-gray-400 text-xs">Chưa có tin nhắn nào trong phiên này.</div>`;
+        return;
+      }
+
+      messagesArea.innerHTML = messages.map(msg => {
+        const isCustomer = msg.sender === 'customer';
+        const timeStr = msg.created_at ? new Date(msg.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '';
+        
+        if (isCustomer) {
+          return `
+            <div class="flex items-start gap-2 max-w-[80%] self-start">
+              <div class="w-6 h-6 rounded-full bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-zinc-200 flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">
+                ${(msg.customer_name || 'K').charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <div class="bg-gray-100 dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 p-3 rounded-2xl rounded-tl-xs shadow-2xs leading-relaxed break-words">
+                  ${msg.message.replace(/\n/g, '<br>')}
+                </div>
+                <div class="text-[10px] text-gray-400 mt-1 pl-1">${msg.customer_name || 'Khách hàng'} • ${timeStr}</div>
+              </div>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="flex items-start justify-end gap-2 max-w-[80%] self-end ml-auto">
+              <div>
+                <div class="bg-amber-800 text-white p-3 rounded-2xl rounded-tr-xs shadow-2xs leading-relaxed break-words">
+                  ${msg.message.replace(/\n/g, '<br>')}
+                </div>
+                <div class="text-[10px] text-gray-400 mt-1 pr-1 text-right">Tư vấn viên (moccnha) • ${timeStr}</div>
+              </div>
+              <div class="w-6 h-6 rounded-full bg-amber-800 text-white flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">
+                M
+              </div>
+            </div>
+          `;
+        }
+      }).join('');
+
+      messagesArea.scrollTop = messagesArea.scrollHeight;
+
+    } catch (err) {
+      console.error(err);
+      messagesArea.innerHTML = `<div class="p-4 text-center text-red-500 text-xs">Lỗi khi tải tin nhắn</div>`;
+    }
+  }
+}
+
+async function handleAdminSendReply(e) {
+  e.preventDefault();
+  if (!ACTIVE_ADMIN_SESSION_ID) return;
+
+  const input = document.getElementById('adminReplyInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  input.value = '';
+
+  try {
+    const res = await fetch('/api/admin/chat/reply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id: ACTIVE_ADMIN_SESSION_ID,
+        message: msg
+      })
+    });
+
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast('Đã gửi tin nhắn tư vấn thành công!', 'success');
+      selectAdminChatSession(ACTIVE_ADMIN_SESSION_ID);
+    } else {
+      showToast(data.error || 'Gửi tin nhắn thất bại', 'error');
+    }
+  } catch (err) {
+    showToast('Lỗi mạng', 'error');
+  }
+}
+
+async function deleteCurrentChatSession() {
+  if (!ACTIVE_ADMIN_SESSION_ID) return;
+  if (!confirm('Bạn có chắc chắn muốn xóa toàn bộ cuộc hội thoại này?')) return;
+
+  try {
+    const res = await fetch(`/api/admin/chat/sessions/${encodeURIComponent(ACTIVE_ADMIN_SESSION_ID)}`, {
+      method: 'DELETE'
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast('Đã xóa cuộc hội thoại', 'info');
+      ACTIVE_ADMIN_SESSION_ID = null;
+      document.getElementById('adminActiveCustomerName').textContent = 'Chọn một cuộc hội thoại từ danh sách';
+      document.getElementById('adminActiveSessionMeta').textContent = 'Chưa chọn cuộc hội thoại nào';
+      document.getElementById('adminChatActions').classList.add('hidden');
+      document.getElementById('adminReplyInput').disabled = true;
+      document.getElementById('adminReplySendBtn').disabled = true;
+      document.getElementById('adminChatMessagesArea').innerHTML = `
+        <div class="h-full flex flex-col items-center justify-center text-gray-400 text-xs">
+          <span class="text-3xl mb-2">💬</span>
+          <p>Vui lòng bấm vào một phiên chat ở cột bên trái để xem lịch sử và trả lời khách hàng.</p>
+        </div>
+      `;
+      loadAdminChatSessions();
+      loadAdminStats();
+    }
+  } catch (err) {
+    showToast('Lỗi khi xóa cuộc hội thoại', 'error');
   }
 }
 

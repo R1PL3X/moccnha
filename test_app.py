@@ -251,6 +251,60 @@ class MohoStoreTestCase(unittest.TestCase):
         del_res = self.client.delete(f'/api/products/{prod_id}')
         self.assertEqual(del_res.status_code, 200)
 
+    def test_chatbox_flow(self):
+        # 1. Customer sends a chat message
+        session_id = 'TEST-SESSION-12345'
+        send_res = self.client.post(
+            '/api/chat/send',
+            data=json.dumps({
+                'session_id': session_id,
+                'message': 'Cho mình hỏi về combo giường ngủ HOBRO 1m6',
+                'customer_name': 'Nguyễn Văn Chat',
+                'customer_phone': '0912345678'
+            }),
+            content_type='application/json'
+        )
+        self.assertEqual(send_res.status_code, 200)
+        data = json.loads(send_res.data)
+        self.assertTrue(data['success'])
+        self.assertIn('HOBRO', data['reply'])
+        self.assertGreaterEqual(len(data['messages']), 2) # Customer + Advisor message
+
+        # 2. Get chat history
+        history_res = self.client.get(f'/api/chat/history?session_id={session_id}')
+        self.assertEqual(history_res.status_code, 200)
+        history_data = json.loads(history_res.data)
+        self.assertEqual(history_data['session_id'], session_id)
+        self.assertGreaterEqual(len(history_data['messages']), 2)
+
+        # 3. Admin view chat sessions
+        sessions_res = self.client.get('/api/admin/chat/sessions')
+        self.assertEqual(sessions_res.status_code, 200)
+        sessions = json.loads(sessions_res.data)
+        self.assertTrue(any(s['session_id'] == session_id for s in sessions))
+
+        # 4. Admin reply to session
+        admin_reply_res = self.client.post(
+            '/api/admin/chat/reply',
+            data=json.dumps({
+                'session_id': session_id,
+                'message': 'Dạ bên em đang còn sẵn 2 bộ màu nâu sồi, anh/chị cần giao khi nào ạ?'
+            }),
+            content_type='application/json'
+        )
+        self.assertEqual(admin_reply_res.status_code, 200)
+        admin_data = json.loads(admin_reply_res.data)
+        self.assertTrue(admin_data['success'])
+        self.assertTrue(any('anh/chị cần giao' in m['message'] for m in admin_data['messages']))
+
+        # 5. Access admin chat page
+        page_res = self.client.get('/admin/chats')
+        self.assertEqual(page_res.status_code, 200)
+
+        # 6. Delete chat session
+        del_session_res = self.client.delete(f'/api/admin/chat/sessions/{session_id}')
+        self.assertEqual(del_session_res.status_code, 200)
+
 if __name__ == '__main__':
     unittest.main()
 
