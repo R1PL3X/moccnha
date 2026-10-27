@@ -1,86 +1,102 @@
-# Website Nội Thất MOHO (Full-stack Backend & Frontend với Dark Mode)
+# Mộc Nhà (Moccnha) - E-commerce & Management Platform
 
-Dự án website thương mại điện tử nội thất cao cấp phong cách **MOHO**, được xây dựng dựa trên hình ảnh thực tế với đầy đủ **Backend API (Flask & SQLite)**, giao diện **Frontend hiện đại**, hỗ trợ chuyển đổi linh hoạt **Dark Mode / Light Mode**, giỏ hàng trực tiếp, đặt hàng thanh toán và trang quản trị **Admin Dashboard**.
+Một hệ thống quản lý và nền tảng thương mại điện tử toàn diện, được xây dựng bằng Python. Dự án bao gồm trang dành cho khách hàng (B2C & B2B), bảng điều khiển quản trị để quản lý đơn hàng, doanh thu, sản phẩm, và được tích hợp một trợ lý ảo thông minh (Chat Advisor).
 
----
+## 🌟 Tính năng nổi bật
 
-## 🌟 Tính Năng Nổi Bật
+*   **Giao diện Khách hàng:** Khám phá sản phẩm, hệ thống cửa hàng, tin tức, và chính sách.
+*   **Hỗ trợ B2B & B2C:** Các trang và quy trình riêng biệt phục vụ cho cả khách hàng lẻ và đối tác doanh nghiệp (Báo giá/Quotes).
+*   **Quản trị hệ thống:**
+    *   Quản lý Sản phẩm (`admin_products`).
+    *   Quản lý Đơn hàng (`admin_orders`).
+    *   Báo cáo Doanh thu (`admin_revenue`).
+    *   Quản lý Yêu cầu Báo giá (`admin_quotes`).
+*   **Tích hợp AI Chat Advisor:** Trợ lý ảo hỗ trợ khách hàng trực tuyến (`chat_advisor.py`).
+*   **Cơ sở dữ liệu Supabase:** Quản lý dữ liệu mạnh mẽ với PostgreSQL thông qua Supabase (`sync_to_supabase.py`, `db_adapter.py`).
+*   **Hỗ trợ triển khai đa nền tảng:** Sẵn sàng deploy lên Vercel (`vercel.json`) hoặc các nền tảng sử dụng Procfile/Gunicorn.
 
-### 1. Giao diện chuẩn xác theo thiết kế ảnh mẫu (MOHO Storefront)
-- **Header chuẩn hóa**: Logo `moho.`, thanh tìm kiếm thông minh có gợi ý tự động (live search), khu vực tài khoản khách hàng, giỏ hàng với badge đếm số lượng.
-- **Thanh Menu điều hướng**: Menu đa tầng gồm *Sản phẩm (Dropdown danh mục)*, *Khuyến mãi*, *Bán chạy*, *Nội thất giá sỉ*, *Tin tức*, *Về MOHO*, *Cửa hàng*.
-- **Hero Banner VLINE đặc trưng**: Khung tag `VLINE`, tiêu đề phong cách *Lưu Giữ Nét Xưa Trong Không Gian Đương Đại*, phân nhóm *Phòng Khách | Phòng Ngủ | Phòng Ăn*, nút bấm *Xem Chi Tiết*.
-- **Mục "Ưu Đãi Tháng Phái Đẹp" & "Bán chạy"**: Các thẻ sản phẩm chuẩn từng chi tiết:
-  - Tag giảm giá nổi bật (`-26%`, `-32%`, `-10%`, `-42%`...)
-  - Combo Giường - Tủ Đầu Giường VLINE (Màu tự nhiên, màu nâu), HOBRO, DALUMD 301, Sofa băng VLINE, Sofa giường thông minh,...
-  - Giá khuyến mãi đỏ đậm, giá gốc gạch ngang, số lượng *Đã bán*, đánh giá sao và bảng chọn màu (color swatches).
-- **Cụm nút liên hệ nổi (Floating Action Buttons)** ở góc phải dưới:
-  - 📞 Hotline (Xanh lá - sao chép số gọi ngay `097 114 1140`)
-  - 💬 Zalo CSKH (Xanh dương)
-  - 💬 Facebook Messenger (Xanh dương)
-  - ⬆️ Cuộn lên đầu trang (Xanh lá - Scroll to top)
+## 🛠 Công nghệ sử dụng
 
-### 2. Chế độ Dark Mode (Giao diện ban đêm) 🌙
-- Nút chuyển đổi nhanh **Sun / Moon** đặt trên Header.
-- Đồng bộ theo giao diện hệ thống máy tính và lưu trữ lựa chọn trong `localStorage`.
-- Phối màu Dark Mode sang trọng, giảm mỏi mắt, tương phản cao, bảo toàn độ ấm và màu sắc của chất liệu gỗ nội thất.
+*   **Backend:** Python (Flask/FastAPI - thông qua `app.py`)
+*   **Database:** Supabase (PostgreSQL)
+*   **Frontend:** HTML5, CSS3, Vanilla JavaScript (`templates/`, `static/`)
+*   **Deployment:** Vercel, Gunicorn
 
-### 3. Backend & Cơ Sở Dữ Liệu Hoàn Chỉnh (Flask + SQLite)
-- **Cơ sở dữ liệu SQLite (`moho_store.db`)**: Bảng `products`, `categories`, `orders`, `users`.
-- **RESTful API**:
-  - `GET /api/products`: Lấy danh sách sản phẩm (hỗ trợ lọc danh mục, tìm kiếm từ khóa, sắp xếp theo giá, bán chạy, giảm giá).
-  - `GET /api/products/<id>`: Chi tiết sản phẩm, thư viện ảnh (gallery), kích thước, chất liệu, màu sắc.
-  - `POST /api/products`: Thêm sản phẩm mới vào kho.
-  - `DELETE /api/products/<id>`: Xóa sản phẩm khỏi hệ thống.
-  - `GET /api/categories`: Danh mục kèm số lượng sản phẩm.
-  - `POST /api/orders`: Tiếp nhận đơn đặt hàng từ khách hàng, tạo mã đơn tự động dạng `MOHO-XXXXX`.
-  - `GET /api/orders`: Danh sách đơn hàng cho ban quản trị.
-  - `PATCH /api/orders/<code_order>/status`: Cập nhật trạng thái đơn (Chờ xử lý, Đã xác nhận, Đang vận chuyển, Hoàn thành, Hủy).
-  - `POST /api/auth/login` & `POST /api/auth/register`: Xác thực tài khoản khách hàng và quản trị viên.
-  - `GET /api/stats`: Thống kê doanh thu, đơn hàng, tổng sản phẩm.
+## ⚙️ Yêu cầu hệ thống
 
-### 4. Tính Năng Mua Hàng & Quản Trị Khép Kín
-- **Ngăn kéo Giỏ hàng (Cart Drawer)** trượt từ bên phải: Tăng giảm số lượng, xóa món, thanh tiến độ miễn phí vận chuyển cho đơn trên 2 triệu.
-- **Modal Thanh toán (Checkout)**: Nhập thông tin người nhận, lựa chọn hình thức COD hoặc chuyển khoản quét mã VietQR.
-- **Trang Quản trị Admin (`/admin`)**:
-  - Xem bảng thống kê doanh thu và tổng số đơn.
-  - Cập nhật trạng thái đơn hàng khi xử lý.
-  - Thêm sản phẩm mới hoặc xóa sản phẩm khỏi kho bán lẻ.
+*   Python 3.8+
+*   Tài khoản Supabase (để thiết lập cơ sở dữ liệu)
 
----
+## 🚀 Hướng dẫn cài đặt
 
-## 🚀 Hướng Dẫn Cài Đặt & Chạy Ứng Dụng
-
-### Yêu cầu hệ thống:
-- Python 3.10+ (Đã có sẵn trên máy của bạn: Python 3.12.7)
-- Thư viện Flask (Đã được cài đặt)
-
-### Cách khởi động:
-
-1. Mở cửa sổ dòng lệnh (PowerShell hoặc CMD) tại thư mục dự án:
-   ```powershell
-   cd c:\Users\1\Downloads\mocnhaa
+1. **Clone repository:**
+   ```bash
+   git clone <repository-url>
+   cd moccnha
    ```
 
-2. Khởi động máy chủ web:
-   ```powershell
+2. **Tạo môi trường ảo (Virtual Environment):**
+   ```bash
+   python -m venv venv
+   # Kích hoạt trên Windows:
+   venv\Scripts\activate
+   # Kích hoạt trên macOS/Linux:
+   source venv/bin/activate
+   ```
+
+3. **Cài đặt thư viện phụ thuộc:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Thiết lập biến môi trường:**
+   * Copy file `.env.example` thành `.env`
+   * Cập nhật các thông tin cấu hình (đặc biệt là API Keys của Supabase và AI Chat):
+   ```bash
+   cp .env.example .env
+   ```
+
+5. **Thiết lập cơ sở dữ liệu:**
+   * Chạy các script SQL trong `supabase_schema.sql` trên Supabase Dashboard của bạn để tạo bảng.
+
+6. **Khởi chạy ứng dụng (Local Development):**
+   * Sử dụng file batch chạy trên Windows:
+   ```bash
+   start.bat
+   ```
+   * Hoặc chạy trực tiếp bằng Python:
+   ```bash
    python app.py
    ```
+   Ứng dụng sẽ hoạt động tại `https://moccnha.vercel.app/`
 
-3. Mở trình duyệt web và truy cập:
-   - **Trang chủ cửa hàng**: [http://localhost:5000](http://localhost:5000)
-   - **Trang quản trị Admin**: [http://localhost:5000/admin](http://localhost:5000/admin)
+## ☁️ Triển khai (Deployment)
 
-> **Tài khoản Admin mẫu:**
-> - Email: `admin@moho.vn`
-> - Mật khẩu: `admin123`
+Dự án này đã được cấu hình sẵn để triển khai dễ dàng:
 
----
+*   **Vercel:** Sử dụng file `vercel.json` và thư mục `api/` để deploy dạng Serverless Functions.
+*   **Heroku / Render:** Sử dụng `Procfile` (chạy qua lệnh `web: gunicorn app:app`).
 
-## 🧪 Chạy Kiểm Thử Tự Động (Automated Tests)
+## 📁 Cấu trúc thư mục chính
 
-Chạy bộ kiểm thử backend API:
-```powershell
+```text
+├── api/                  # Serverless functions cho Vercel
+├── public/               # Cấu trúc tệp tĩnh public
+├── static/               # Assets (CSS, JS, Hình ảnh)
+│   ├── css/
+│   └── js/               # Chứa app.js, admin.js, chat.js
+├── templates/            # Giao diện HTML (Admin, B2B, Stores, News,...)
+├── app.py                # Điểm vào chính của ứng dụng
+├── chat_advisor.py       # Logic xử lý cho Chatbot AI
+├── database.py           # Kết nối cơ sở dữ liệu
+├── db_adapter.py         # Cầu nối thao tác dữ liệu
+├── supabase_schema.sql   # File cấu trúc bảng Supabase
+└── sync_to_supabase.py   # Script đồng bộ dữ liệu
+```
+
+## 🧪 Kiểm thử
+
+Chạy script kiểm thử để đảm bảo hệ thống hoạt động ổn định:
+```bash
 python test_app.py
 ```
-Kết quả kiểm tra gồm 6 test cases kiểm định toàn bộ từ việc render trang, lọc sản phẩm, tạo đơn hàng cho đến đăng nhập thành công.
