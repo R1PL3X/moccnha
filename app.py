@@ -128,10 +128,6 @@ def admin_products_page():
 def admin_quotes_page():
     return render_template('admin_quotes.html')
 
-@app.route('/admin/chats')
-def admin_chats_page():
-    return render_template('admin_chats.html')
-
 @app.errorhandler(404)
 def not_found(e):
     return jsonify({'error': '404 Không tìm thấy trang yêu cầu'}), 404

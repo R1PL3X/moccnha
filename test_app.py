@@ -297,9 +297,10 @@ class MohoStoreTestCase(unittest.TestCase):
         self.assertTrue(admin_data['success'])
         self.assertTrue(any('anh/chị cần giao' in m['message'] for m in admin_data['messages']))
 
-        # 5. Access admin chat page
-        page_res = self.client.get('/admin/chats')
+        # 5. Verify customer pages load with chat widget available
+        page_res = self.client.get('/')
         self.assertEqual(page_res.status_code, 200)
+        self.assertIn(b'chat.js', page_res.data)
 
         # 6. Delete chat session
         del_session_res = self.client.delete(f'/api/admin/chat/sessions/{session_id}')
