@@ -68,9 +68,6 @@ def auto_seed_supabase_if_empty():
     except Exception as e:
         logger.warning(f"Could not auto-seed Supabase: {e}")
 
-if _using_supabase:
-    auto_seed_supabase_if_empty()
-
 def test_and_configure_supabase(url, key):
     """Test connection to Supabase with given credentials and set as active DB if valid"""
     global supabase_client, _using_supabase, SUPABASE_URL, SUPABASE_KEY
@@ -94,7 +91,7 @@ def test_and_configure_supabase(url, key):
         return False, f"Lỗi kết nối Supabase: {str(e)}"
 
 def sync_local_to_supabase():
-    """Sync categories, products, users, orders, and quotes from local SQLite to Supabase Cloud"""
+    """Sync categories, products, users, orders, and quotes from local SQLite to Supabase Cloud using bulk operations"""
     if not is_supabase_enabled():
         return False, "Chưa kết nối Supabase Cloud"
     
@@ -106,22 +103,24 @@ def sync_local_to_supabase():
     # 1. Categories
     try:
         cats = conn.execute('SELECT * FROM categories').fetchall()
-        for c in cats:
-            supabase_client.table('categories').upsert({
-                'name': c['name'],
-                'slug': c['slug'],
-                'icon': c['icon']
-            }, on_conflict='name').execute()
-            stats['categories'] += 1
+        cat_payloads = [{
+            'name': c['name'],
+            'slug': c['slug'],
+            'icon': c['icon']
+        } for c in cats]
+        if cat_payloads:
+            supabase_client.table('categories').upsert(cat_payloads, on_conflict='name').execute()
+            stats['categories'] = len(cat_payloads)
     except Exception as e:
         errors.append(f"Categories: {e}")
 
     # 2. Products
     try:
         prods = conn.execute('SELECT * FROM products').fetchall()
+        prod_payloads = []
         for p in prods:
             d = dict(p)
-            payload = {
+            prod_payloads.append({
                 'title': d['title'],
                 'full_title': d.get('full_title') or d['title'],
                 'category': d['category'],
@@ -142,73 +141,64 @@ def sync_local_to_supabase():
                 'description': d.get('description', ''),
                 'material': d.get('material', 'Gỗ tự nhiên'),
                 'dimensions': d.get('dimensions', 'Tiêu chuẩn')
-            }
-            existing = supabase_client.table('products').select('id').eq('title', payload['title']).execute()
-            if existing.data and len(existing.data) > 0:
-                supabase_client.table('products').update(payload).eq('title', payload['title']).execute()
-            else:
-                supabase_client.table('products').insert(payload).execute()
-            stats['products'] += 1
+            })
+        if prod_payloads:
+            supabase_client.table('products').upsert(prod_payloads, on_conflict='title').execute()
+            stats['products'] = len(prod_payloads)
     except Exception as e:
         errors.append(f"Products: {e}")
 
     # 3. Users
     try:
         users = conn.execute('SELECT * FROM users').fetchall()
-        for u in users:
-            ud = dict(u)
-            supabase_client.table('users').upsert({
-                'fullname': ud['fullname'],
-                'email': ud['email'],
-                'phone': ud.get('phone', ''),
-                'password': ud['password'],
-                'role': ud.get('role', 'customer')
-            }, on_conflict='email').execute()
-            stats['users'] += 1
+        user_payloads = [{
+            'fullname': ud['fullname'],
+            'email': ud['email'],
+            'phone': ud.get('phone', ''),
+            'password': ud['password'],
+            'role': ud.get('role', 'customer')
+        } for ud in users]
+        if user_payloads:
+            supabase_client.table('users').upsert(user_payloads, on_conflict='email').execute()
+            stats['users'] = len(user_payloads)
     except Exception as e:
         errors.append(f"Users: {e}")
 
     # 4. Orders
     try:
         orders = conn.execute('SELECT * FROM orders').fetchall()
-        for o in orders:
-            od = dict(o)
-            order_payload = {
-                'order_code': od['order_code'],
-                'customer_name': od['customer_name'],
-                'customer_phone': od['customer_phone'],
-                'customer_email': od.get('customer_email', ''),
-                'customer_address': od['customer_address'],
-                'payment_method': od.get('payment_method', 'COD'),
-                'note': od.get('note', ''),
-                'items': normalize_json_field(od.get('items')),
-                'total_amount': od['total_amount'],
-                'status': od.get('status', 'pending')
-            }
-            existing = supabase_client.table('orders').select('id').eq('order_code', od['order_code']).execute()
-            if existing.data and len(existing.data) > 0:
-                supabase_client.table('orders').update(order_payload).eq('order_code', od['order_code']).execute()
-            else:
-                supabase_client.table('orders').insert(order_payload).execute()
-            stats['orders'] += 1
+        order_payloads = [{
+            'order_code': od['order_code'],
+            'customer_name': od['customer_name'],
+            'customer_phone': od['customer_phone'],
+            'customer_email': od.get('customer_email', ''),
+            'customer_address': od['customer_address'],
+            'payment_method': od.get('payment_method', 'COD'),
+            'note': od.get('note', ''),
+            'items': normalize_json_field(od.get('items')),
+            'total_amount': od['total_amount'],
+            'status': od.get('status', 'pending')
+        } for od in orders]
+        if order_payloads:
+            supabase_client.table('orders').upsert(order_payloads, on_conflict='order_code').execute()
+            stats['orders'] = len(order_payloads)
     except Exception as e:
         errors.append(f"Orders: {e}")
 
     # 5. Quotes
     try:
         quotes = conn.execute('SELECT * FROM quotes').fetchall()
-        for q in quotes:
-            qd = dict(q)
-            quote_payload = {
-                'fullname': qd['fullname'],
-                'phone': qd['phone'],
-                'email': qd.get('email', ''),
-                'project_type': qd.get('project_type', ''),
-                'note': qd.get('note', ''),
-                'status': qd.get('status', 'pending')
-            }
-            supabase_client.table('quotes').insert(quote_payload).execute()
-            stats['quotes'] += 1
+        quote_payloads = [{
+            'fullname': qd['fullname'],
+            'phone': qd['phone'],
+            'email': qd.get('email', ''),
+            'project_type': qd.get('project_type', ''),
+            'note': qd.get('note', ''),
+            'status': qd.get('status', 'pending')
+        } for qd in quotes]
+        if quote_payloads:
+            supabase_client.table('quotes').insert(quote_payloads).execute()
+            stats['quotes'] = len(quote_payloads)
     except Exception as e:
         errors.append(f"Quotes: {e}")
 
@@ -286,11 +276,6 @@ def get_categories():
         try:
             cats_res = supabase_client.table('categories').select('*').order('id').execute()
             categories = cats_res.data or []
-            
-            if not categories:
-                auto_seed_supabase_if_empty()
-                cats_res = supabase_client.table('categories').select('*').order('id').execute()
-                categories = cats_res.data or []
 
             if categories:
                 # Fetch products to calculate product counts
@@ -353,10 +338,6 @@ def get_products(category=None, search=None, bestseller=None, promo=None, sort='
                 
             res = query.execute()
             data = res.data or []
-            if not data and not category and not search:
-                auto_seed_supabase_if_empty()
-                res = query.execute()
-                data = res.data or []
 
             if data:
                 return [format_product_dict(p) for p in data]
@@ -646,10 +627,6 @@ def get_orders():
         try:
             res = supabase_client.table('orders').select('*').order('created_at', desc=True).execute()
             orders = res.data or []
-            if not orders:
-                auto_seed_supabase_if_empty()
-                res = supabase_client.table('orders').select('*').order('created_at', desc=True).execute()
-                orders = res.data or []
             if orders:
                 return [format_order_dict(o) for o in orders]
         except Exception as e:
@@ -884,10 +861,6 @@ def get_stats():
             # Count products
             p_res = supabase_client.table('products').select('id', count='exact').execute()
             total_products = p_res.count if p_res.count is not None else len(p_res.data or [])
-            if total_products == 0:
-                auto_seed_supabase_if_empty()
-                p_res = supabase_client.table('products').select('id', count='exact').execute()
-                total_products = p_res.count if p_res.count is not None else len(p_res.data or [])
             
             if total_products > 0:
                 # Count orders and calculate revenue

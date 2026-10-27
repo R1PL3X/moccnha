@@ -18,9 +18,15 @@ def get_db_connection():
         conn.row_factory = sqlite3.Row
         return conn
 
-def init_db():
+_db_initialized = False
+
+def init_db(force=False):
+    global _db_initialized
+    if _db_initialized and not force:
+        return
     try:
         _init_db_internal()
+        _db_initialized = True
     except Exception as e:
         print(f"[DB INIT WARNING] {e}")
 

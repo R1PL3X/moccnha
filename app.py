@@ -27,12 +27,6 @@ app = Flask(
 )
 app.secret_key = os.environ.get('SECRET_KEY', 'moho-vietnam-default-secret-key-2026')
 
-# Synchronize sold counts from valid orders on startup
-try:
-    db_adapter.sync_sold_counts_from_orders()
-except Exception as e:
-    pass
-
 class VercelPathFixMiddleware:
     """
     WSGI Middleware to accurately restore the original request path when deployed on Vercel
