@@ -166,6 +166,91 @@ class MohoStoreTestCase(unittest.TestCase):
         del_res = self.client.delete(f'/api/quotes/{quote_id}')
         self.assertEqual(del_res.status_code, 200)
 
+    def test_sold_count_flow(self):
+        # 1. Create a product with initial sold_count = 5
+        create_res = self.client.post(
+            '/api/products',
+            data=json.dumps({
+                'title': 'Tủ gỗ IKEA Test',
+                'category': 'Tủ & Kệ',
+                'price': 500000,
+                'original_price': 1000000,
+                'discount_percent': 50,
+                'sold_count': 5
+            }),
+            content_type='application/json'
+        )
+        self.assertEqual(create_res.status_code, 201)
+        prod_id = json.loads(create_res.data)['id']
+
+        # Verify initial sold_count
+        get_res = self.client.get(f'/api/products/{prod_id}')
+        prod = json.loads(get_res.data)
+        self.assertEqual(prod['sold_count'], 5)
+
+        # 2. Place an order for 3 items of this product
+        order_payload = {
+            'user_id': 1,
+            'name': 'Khách Mua Test',
+            'phone': '0987654321',
+            'address': 'TP.HCM',
+            'payment_method': 'COD',
+            'items': [
+                {
+                    'id': prod_id,
+                    'title': 'Tủ gỗ IKEA Test',
+                    'price': 500000,
+                    'quantity': 3
+                }
+            ],
+            'total_amount': 1500000
+        }
+        order_res = self.client.post('/api/orders', data=json.dumps(order_payload), content_type='application/json')
+        self.assertEqual(order_res.status_code, 201)
+        order_code = json.loads(order_res.data)['order_code']
+
+        # Verify sold_count increased to 5 + 3 = 8
+        get_res = self.client.get(f'/api/products/{prod_id}')
+        prod = json.loads(get_res.data)
+        self.assertEqual(prod['sold_count'], 8)
+
+        # 3. Cancel the order -> sold_count should decrease back to 5
+        cancel_res = self.client.patch(
+            f'/api/orders/{order_code}/status',
+            data=json.dumps({'status': 'cancelled'}),
+            content_type='application/json'
+        )
+        self.assertEqual(cancel_res.status_code, 200)
+        get_res = self.client.get(f'/api/products/{prod_id}')
+        prod = json.loads(get_res.data)
+        self.assertEqual(prod['sold_count'], 5)
+
+        # 4. Un-cancel (restore) the order to 'confirmed' -> sold_count should go back to 8
+        restore_res = self.client.patch(
+            f'/api/orders/{order_code}/status',
+            data=json.dumps({'status': 'confirmed'}),
+            content_type='application/json'
+        )
+        self.assertEqual(restore_res.status_code, 200)
+        get_res = self.client.get(f'/api/products/{prod_id}')
+        prod = json.loads(get_res.data)
+        self.assertEqual(prod['sold_count'], 8)
+
+        # 5. Directly update sold_count via PATCH /api/products/<id>
+        patch_prod_res = self.client.patch(
+            f'/api/products/{prod_id}',
+            data=json.dumps({'sold_count': 120}),
+            content_type='application/json'
+        )
+        self.assertEqual(patch_prod_res.status_code, 200)
+        get_res = self.client.get(f'/api/products/{prod_id}')
+        prod = json.loads(get_res.data)
+        self.assertEqual(prod['sold_count'], 120)
+
+        # 6. Clean up test product
+        del_res = self.client.delete(f'/api/products/{prod_id}')
+        self.assertEqual(del_res.status_code, 200)
+
 if __name__ == '__main__':
     unittest.main()
 

@@ -26,6 +26,12 @@ app = Flask(
 )
 app.secret_key = os.environ.get('SECRET_KEY', 'moho-vietnam-default-secret-key-2026')
 
+# Synchronize sold counts from valid orders on startup
+try:
+    db_adapter.sync_sold_counts_from_orders()
+except Exception as e:
+    pass
+
 class VercelPathFixMiddleware:
     """
     WSGI Middleware to accurately restore the original request path when deployed on Vercel
@@ -186,6 +192,23 @@ def delete_product(product_id):
         return jsonify({'success': True, 'message': 'Đã xóa sản phẩm thành công'})
     except Exception as e:
         return jsonify({'error': f'Lỗi khi xóa sản phẩm: {str(e)}'}), 500
+
+@app.route('/api/products/<int:product_id>', methods=['PUT', 'PATCH'])
+def update_product(product_id):
+    data = request.get_json() or {}
+    try:
+        db_adapter.update_product(product_id, data)
+        return jsonify({'success': True, 'message': 'Cập nhật sản phẩm thành công'})
+    except Exception as e:
+        return jsonify({'error': f'Lỗi khi cập nhật sản phẩm: {str(e)}'}), 500
+
+@app.route('/api/products/sync-sold', methods=['POST'])
+def sync_sold_endpoint():
+    try:
+        db_adapter.sync_sold_counts_from_orders()
+        return jsonify({'success': True, 'message': 'Đã đồng bộ số lượng đã bán từ đơn hàng thành công'})
+    except Exception as e:
+        return jsonify({'error': f'Lỗi khi đồng bộ: {str(e)}'}), 500
 
 @app.route('/api/orders', methods=['POST'])
 def create_order():

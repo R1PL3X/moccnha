@@ -139,6 +139,34 @@ def _init_db_internal():
     else:
         update_product_highlights(conn)
 
+    # Automatically sync sold_count for any products with placed orders
+    try:
+        rows = cursor.execute("SELECT items FROM orders WHERE status != 'cancelled'").fetchall()
+        item_counts = {}
+        for r in rows:
+            try:
+                raw_items = r[0] if isinstance(r, (list, tuple)) else r['items']
+                items = json.loads(raw_items) if isinstance(raw_items, str) else (raw_items or [])
+                for item in items:
+                    pid = item.get('id') or item.get('product_id')
+                    qty = int(item.get('quantity') or 1)
+                    if pid and qty > 0:
+                        item_counts[pid] = item_counts.get(pid, 0) + qty
+            except Exception:
+                pass
+        for pid, s_count in item_counts.items():
+            cursor.execute('''
+                UPDATE products 
+                SET sold_count = CASE 
+                    WHEN sold_count IS NULL OR sold_count < ? THEN ? 
+                    ELSE sold_count 
+                END 
+                WHERE id = ?
+            ''', (s_count, s_count, pid))
+        conn.commit()
+    except Exception:
+        pass
+
     conn.close()
 
 def update_product_highlights(conn):

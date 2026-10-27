@@ -256,6 +256,7 @@ def create_product(product_data):
                 'price': product_data['price'],
                 'original_price': product_data.get('original_price', product_data['price']),
                 'discount_percent': product_data.get('discount_percent', 0),
+                'sold_count': int(product_data.get('sold_count') or 0),
                 'image': product_data.get('image', 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800'),
                 'description': product_data.get('description', ''),
                 'material': product_data.get('material', 'Gỗ tự nhiên'),
@@ -280,16 +281,17 @@ def create_product(product_data):
     gallery_str = json.dumps(normalize_json_field(product_data.get('gallery', [product_data.get('image')])))
     colors_str = json.dumps(normalize_json_field(product_data.get('colors', [{"name": "Mặc định", "hex": "#e3c299"}])))
     highlights_str = json.dumps(normalize_json_field(product_data.get('highlights', [])))
+    sold_count = int(product_data.get('sold_count') or 0)
 
     cursor.execute('''
         INSERT INTO products (
             title, category, collection, price, original_price, discount_percent,
-            image, gallery, colors, is_bestseller, is_promo, description, material, dimensions, highlights
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            sold_count, image, gallery, colors, is_bestseller, is_promo, description, material, dimensions, highlights
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         product_data['title'], product_data['category'], product_data.get('collection', 'MOHO'),
         product_data['price'], product_data.get('original_price', product_data['price']),
-        product_data.get('discount_percent', 0), product_data.get('image', ''),
+        product_data.get('discount_percent', 0), sold_count, product_data.get('image', ''),
         gallery_str, colors_str, 1 if product_data.get('is_bestseller') else 0,
         1 if product_data.get('is_promo') else 0, product_data.get('description', ''),
         product_data.get('material', 'Gỗ tự nhiên'), product_data.get('dimensions', 'Tiêu chuẩn'),
@@ -299,6 +301,65 @@ def create_product(product_data):
     new_id = cursor.lastrowid
     conn.close()
     return new_id
+
+def update_product(product_id, product_data):
+    """Update product information, including sold_count, price, title, etc."""
+    if is_supabase_enabled():
+        try:
+            payload = {}
+            for field in ['title', 'category', 'collection', 'price', 'original_price',
+                          'discount_percent', 'sold_count', 'image', 'description',
+                          'material', 'dimensions', 'is_bestseller', 'is_promo']:
+                if field in product_data:
+                    if field in ['price', 'original_price', 'discount_percent', 'sold_count', 'is_bestseller', 'is_promo']:
+                        payload[field] = int(product_data[field])
+                    else:
+                        payload[field] = product_data[field]
+            if 'gallery' in product_data:
+                payload['gallery'] = normalize_json_field(product_data['gallery'])
+            if 'colors' in product_data:
+                payload['colors'] = normalize_json_field(product_data['colors'])
+            if 'highlights' in product_data:
+                payload['highlights'] = normalize_json_field(product_data['highlights'])
+
+            if payload:
+                supabase_client.table('products').update(payload).eq('id', product_id).execute()
+            return True
+        except Exception as e:
+            logger.error(f"Supabase update_product error: {e}")
+            raise
+
+    # SQLite Fallback
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    fields = []
+    params = []
+    for field in ['title', 'category', 'collection', 'price', 'original_price',
+                  'discount_percent', 'sold_count', 'image', 'description',
+                  'material', 'dimensions', 'is_bestseller', 'is_promo']:
+        if field in product_data:
+            fields.append(f"{field} = ?")
+            if field in ['price', 'original_price', 'discount_percent', 'sold_count', 'is_bestseller', 'is_promo']:
+                params.append(int(product_data[field]))
+            else:
+                params.append(product_data[field])
+
+    if 'gallery' in product_data:
+        fields.append("gallery = ?")
+        params.append(json.dumps(normalize_json_field(product_data['gallery'])))
+    if 'colors' in product_data:
+        fields.append("colors = ?")
+        params.append(json.dumps(normalize_json_field(product_data['colors'])))
+    if 'highlights' in product_data:
+        fields.append("highlights = ?")
+        params.append(json.dumps(normalize_json_field(product_data['highlights'])))
+
+    if fields:
+        params.append(product_id)
+        cursor.execute(f"UPDATE products SET {', '.join(fields)} WHERE id = ?", params)
+        conn.commit()
+    conn.close()
+    return True
 
 def delete_product(product_id):
     """Delete a product by ID"""
@@ -318,7 +379,10 @@ def delete_product(product_id):
     return True
 
 def create_order(order_data):
-    """Create a new order in the database"""
+    """Create a new order in the database and increment sold_count for purchased products"""
+    items = normalize_json_field(order_data.get('items', []))
+    status = order_data.get('status', 'pending')
+
     if is_supabase_enabled():
         try:
             payload = {
@@ -330,11 +394,24 @@ def create_order(order_data):
                 'customer_address': order_data['customer_address'],
                 'payment_method': order_data.get('payment_method', 'COD'),
                 'note': order_data.get('note', ''),
-                'items': normalize_json_field(order_data['items']),
+                'items': items,
                 'total_amount': order_data['total_amount'],
-                'status': 'pending'
+                'status': status
             }
             supabase_client.table('orders').insert(payload).execute()
+
+            # Increase sold_count for purchased products
+            for item in items:
+                pid = item.get('id') or item.get('product_id')
+                qty = int(item.get('quantity') or 1)
+                if pid and qty > 0:
+                    try:
+                        p_res = supabase_client.table('products').select('sold_count').eq('id', pid).single().execute()
+                        curr_sold = (p_res.data or {}).get('sold_count') or 0
+                        supabase_client.table('products').update({'sold_count': curr_sold + qty}).eq('id', pid).execute()
+                    except Exception as err:
+                        logger.error(f"Failed to increment sold_count in Supabase for product {pid}: {err}")
+
             return True
         except Exception as e:
             logger.error(f"Supabase create_order error: {e}")
@@ -347,14 +424,26 @@ def create_order(order_data):
         INSERT INTO orders (
             user_id, order_code, customer_name, customer_phone, customer_email,
             customer_address, payment_method, note, items, total_amount, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         order_data['user_id'], order_data['order_code'], order_data['customer_name'],
         order_data['customer_phone'], order_data.get('customer_email', ''),
         order_data['customer_address'], order_data.get('payment_method', 'COD'),
-        order_data.get('note', ''), json.dumps(normalize_json_field(order_data['items'])),
-        order_data['total_amount']
+        order_data.get('note', ''), json.dumps(items),
+        order_data['total_amount'], status
     ))
+
+    # Increase sold_count for purchased products
+    for item in items:
+        pid = item.get('id') or item.get('product_id')
+        qty = int(item.get('quantity') or 1)
+        if pid and qty > 0:
+            cursor.execute('''
+                UPDATE products 
+                SET sold_count = COALESCE(sold_count, 0) + ? 
+                WHERE id = ?
+            ''', (qty, pid))
+
     conn.commit()
     conn.close()
     return True
@@ -392,9 +481,41 @@ def get_orders():
     return [format_order_dict(dict(r)) for r in rows]
 
 def update_order_status(order_code, new_status):
-    """Update status of an order by its unique code"""
+    """Update status of an order by its unique code and adjust sold_count if status changed to/from cancelled"""
     if is_supabase_enabled():
         try:
+            # Check old status to adjust sold_count
+            res = supabase_client.table('orders').select('*').eq('order_code', order_code).single().execute()
+            order = res.data
+            if order:
+                old_status = order.get('status')
+                items = normalize_json_field(order.get('items'))
+                if old_status != new_status:
+                    if new_status == 'cancelled' and old_status != 'cancelled':
+                        for item in items:
+                            pid = item.get('id') or item.get('product_id')
+                            qty = int(item.get('quantity') or 1)
+                            if pid and qty > 0:
+                                try:
+                                    p_res = supabase_client.table('products').select('sold_count').eq('id', pid).single().execute()
+                                    if p_res.data:
+                                        curr = p_res.data.get('sold_count') or 0
+                                        supabase_client.table('products').update({'sold_count': max(0, curr - qty)}).eq('id', pid).execute()
+                                except Exception as err:
+                                    logger.error(f"Error decreasing sold_count in Supabase: {err}")
+                    elif old_status == 'cancelled' and new_status != 'cancelled':
+                        for item in items:
+                            pid = item.get('id') or item.get('product_id')
+                            qty = int(item.get('quantity') or 1)
+                            if pid and qty > 0:
+                                try:
+                                    p_res = supabase_client.table('products').select('sold_count').eq('id', pid).single().execute()
+                                    if p_res.data:
+                                        curr = p_res.data.get('sold_count') or 0
+                                        supabase_client.table('products').update({'sold_count': curr + qty}).eq('id', pid).execute()
+                                except Exception as err:
+                                    logger.error(f"Error increasing sold_count in Supabase: {err}")
+
             supabase_client.table('orders').update({'status': new_status}).eq('order_code', order_code).execute()
             return True
         except Exception as e:
@@ -403,7 +524,79 @@ def update_order_status(order_code, new_status):
 
     # SQLite Fallback
     conn = get_db_connection()
-    conn.execute('UPDATE orders SET status = ? WHERE order_code = ?', (new_status, order_code))
+    cursor = conn.cursor()
+    row = cursor.execute('SELECT status, items FROM orders WHERE order_code = ?', (order_code,)).fetchone()
+    if row:
+        old_status = row['status']
+        items = normalize_json_field(row['items'])
+        if old_status != new_status:
+            if new_status == 'cancelled' and old_status != 'cancelled':
+                for item in items:
+                    pid = item.get('id') or item.get('product_id')
+                    qty = int(item.get('quantity') or 1)
+                    if pid and qty > 0:
+                        cursor.execute('UPDATE products SET sold_count = MAX(0, COALESCE(sold_count, 0) - ?) WHERE id = ?', (qty, pid))
+            elif old_status == 'cancelled' and new_status != 'cancelled':
+                for item in items:
+                    pid = item.get('id') or item.get('product_id')
+                    qty = int(item.get('quantity') or 1)
+                    if pid and qty > 0:
+                        cursor.execute('UPDATE products SET sold_count = COALESCE(sold_count, 0) + ? WHERE id = ?', (qty, pid))
+
+    cursor.execute('UPDATE orders SET status = ? WHERE order_code = ?', (new_status, order_code))
+    conn.commit()
+    conn.close()
+    return True
+
+def sync_sold_counts_from_orders():
+    """
+    Synchronize product sold_count by scanning all valid (non-cancelled) orders.
+    Ensures that every product reflects at least the number of items sold in orders.
+    """
+    if is_supabase_enabled():
+        try:
+            o_res = supabase_client.table('orders').select('items, status').neq('status', 'cancelled').execute()
+            orders = o_res.data or []
+            item_counts = {}
+            for o in orders:
+                for item in normalize_json_field(o.get('items')):
+                    pid = item.get('id') or item.get('product_id')
+                    qty = int(item.get('quantity') or 1)
+                    if pid and qty > 0:
+                        item_counts[pid] = item_counts.get(pid, 0) + qty
+
+            for pid, count in item_counts.items():
+                p_res = supabase_client.table('products').select('sold_count').eq('id', pid).single().execute()
+                if p_res.data:
+                    curr = p_res.data.get('sold_count') or 0
+                    if curr < count:
+                        supabase_client.table('products').update({'sold_count': count}).eq('id', pid).execute()
+            return True
+        except Exception as e:
+            logger.error(f"Supabase sync_sold_counts_from_orders error: {e}")
+            pass
+
+    # SQLite
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    rows = cursor.execute("SELECT items FROM orders WHERE status != 'cancelled'").fetchall()
+    item_counts = {}
+    for r in rows:
+        for item in normalize_json_field(r['items']):
+            pid = item.get('id') or item.get('product_id')
+            qty = int(item.get('quantity') or 1)
+            if pid and qty > 0:
+                item_counts[pid] = item_counts.get(pid, 0) + qty
+
+    for pid, count in item_counts.items():
+        cursor.execute('''
+            UPDATE products 
+            SET sold_count = CASE 
+                WHEN sold_count IS NULL OR sold_count < ? THEN ? 
+                ELSE sold_count 
+            END 
+            WHERE id = ?
+        ''', (count, count, pid))
     conn.commit()
     conn.close()
     return True

@@ -328,12 +328,15 @@ async function changeOrderStatus(orderCode, newStatus) {
   }
 }
 
+let ALL_ADMIN_PRODUCTS = [];
+
 async function loadAdminProducts() {
   const tbody = document.getElementById('adminProductsTableBody');
   try {
     tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-gray-400">Đang tải kho sản phẩm...</td></tr>`;
     const res = await fetch('/api/products');
     const products = await res.json();
+    ALL_ADMIN_PRODUCTS = products;
 
     if (products.length === 0) {
       tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-gray-400">Chưa có sản phẩm nào</td></tr>`;
@@ -355,19 +358,135 @@ async function loadAdminProducts() {
           <div class="font-bold text-red-600 dark:text-red-400">${formatPrice(product.price)}</div>
           ${product.discount_percent > 0 ? `<div class="text-[10px] line-through text-gray-400">${formatPrice(product.original_price)}</div>` : ''}
         </td>
-        <td class="p-3.5 text-xs text-gray-700 dark:text-gray-300">${product.sold_count || 0}</td>
+        <td class="p-3.5 text-xs text-gray-700 dark:text-gray-300">
+          <div class="flex items-center gap-1.5">
+            <span class="font-bold text-gray-900 dark:text-white">${product.sold_count || 0}</span>
+            <button 
+              onclick="quickEditSoldCount(${product.id}, ${product.sold_count || 0})" 
+              class="text-gray-400 hover:text-amber-800 dark:hover:text-amber-400 p-0.5 rounded transition text-xs"
+              title="Sửa nhanh số lượng đã bán"
+            >
+              ✎
+            </button>
+          </div>
+        </td>
         <td class="p-3.5">
-          <button 
-            onclick="deleteAdminProduct(${product.id}, '${product.title.replace(/'/g, "\\'")}')" 
-            class="text-xs text-red-600 hover:text-red-800 font-semibold hover:underline"
-          >
-            Xóa
-          </button>
+          <div class="flex items-center gap-2">
+            <button 
+              onclick="openEditProductModal(${product.id})" 
+              class="text-xs text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-300 font-semibold hover:underline"
+            >
+              Sửa
+            </button>
+            <span class="text-gray-300 dark:text-zinc-700">|</span>
+            <button 
+              onclick="deleteAdminProduct(${product.id}, '${product.title.replace(/'/g, "\\'")}')" 
+              class="text-xs text-red-600 hover:text-red-800 font-semibold hover:underline"
+            >
+              Xóa
+            </button>
+          </div>
         </td>
       </tr>
     `).join('');
   } catch (err) {
     console.error(err);
+  }
+}
+
+async function quickEditSoldCount(productId, currentCount) {
+  const newCountStr = prompt(`Nhập số lượng đã bán mới cho sản phẩm #${productId}:`, currentCount);
+  if (newCountStr === null) return;
+  const newCount = parseInt(newCountStr);
+  if (isNaN(newCount) || newCount < 0) {
+    showAdminToast('Số lượng đã bán không hợp lệ!', 'error');
+    return;
+  }
+  try {
+    const res = await fetch(`/api/products/${productId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sold_count: newCount })
+    });
+    const result = await res.json();
+    if (res.ok && result.success) {
+      showAdminToast('Đã cập nhật số lượng đã bán!', 'success');
+      loadAdminProducts();
+    } else {
+      showAdminToast(result.error || 'Cập nhật thất bại', 'error');
+    }
+  } catch (err) {
+    showAdminToast('Lỗi mạng', 'error');
+  }
+}
+
+function openEditProductModal(productId) {
+  const product = ALL_ADMIN_PRODUCTS.find(p => p.id === productId);
+  if (!product) return;
+  document.getElementById('editProductId').value = product.id;
+  document.getElementById('editTitle').value = product.title || '';
+  document.getElementById('editCategory').value = product.category || 'Phòng Khách';
+  document.getElementById('editCollection').value = product.collection || 'MOHO';
+  document.getElementById('editPrice').value = product.price || 0;
+  document.getElementById('editOriginalPrice').value = product.original_price || product.price || 0;
+  document.getElementById('editDiscountPercent').value = product.discount_percent || 0;
+  document.getElementById('editSoldCount').value = product.sold_count || 0;
+  document.getElementById('editImage').value = product.image || '';
+  document.getElementById('editDescription').value = product.description || '';
+  document.getElementById('editProductModal')?.classList.remove('hidden');
+}
+
+function closeEditProductModal() {
+  document.getElementById('editProductModal')?.classList.add('hidden');
+}
+
+async function handleUpdateProduct(e) {
+  e.preventDefault();
+  const form = e.target;
+  const productId = form.id.value;
+  const payload = {
+    title: form.title.value.trim(),
+    category: form.category.value,
+    collection: form.collection.value.trim() || 'MOHO',
+    price: parseInt(form.price.value),
+    original_price: parseInt(form.original_price.value) || parseInt(form.price.value),
+    discount_percent: parseInt(form.discount_percent.value) || 0,
+    sold_count: parseInt(form.sold_count.value) || 0,
+    image: form.image.value.trim(),
+    description: form.description.value.trim()
+  };
+
+  try {
+    const res = await fetch(`/api/products/${productId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const result = await res.json();
+    if (res.ok && result.success) {
+      showAdminToast('Đã cập nhật thông tin sản phẩm thành công!', 'success');
+      closeEditProductModal();
+      loadAdminProducts();
+    } else {
+      showAdminToast(result.error || 'Cập nhật thất bại', 'error');
+    }
+  } catch (err) {
+    showAdminToast('Lỗi mạng', 'error');
+  }
+}
+
+async function syncAdminSoldCounts() {
+  try {
+    const res = await fetch('/api/products/sync-sold', { method: 'POST' });
+    const result = await res.json();
+    if (res.ok && result.success) {
+      showAdminToast('Đã đồng bộ số lượng đã bán từ đơn hàng!', 'success');
+      loadAdminProducts();
+    } else {
+      showAdminToast(result.error || 'Đồng bộ thất bại', 'error');
+    }
+  } catch (err) {
+    showAdminToast('Lỗi kết nối máy chủ', 'error');
   }
 }
 
@@ -380,6 +499,7 @@ async function handleCreateProduct(e) {
     price: parseInt(form.price.value),
     original_price: parseInt(form.original_price.value) || parseInt(form.price.value),
     discount_percent: parseInt(form.discount_percent.value) || 0,
+    sold_count: parseInt(form.sold_count?.value) || 0,
     image: form.image.value.trim() || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800',
     collection: form.collection.value.trim() || 'MOHO',
     description: form.description.value.trim(),

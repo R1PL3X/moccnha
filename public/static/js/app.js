@@ -1189,6 +1189,7 @@ async function handleCheckoutSubmit(e) {
       renderCart();
       closeCheckoutModal();
       showOrderSuccessModal(result.order_code, totalAmount, paymentMethod);
+      loadProducts();
     } else {
       showToast(result.error || 'Đặt hàng thất bại. Vui lòng thử lại!', 'error');
     }
