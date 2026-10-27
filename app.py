@@ -214,6 +214,57 @@ def trigger_db_sync():
         'stats': result
     })
 
+# --- GEMINI AI CONFIG & STATUS ENDPOINTS ---
+@app.route('/api/admin/ai-status', methods=['GET'])
+def get_ai_status():
+    """Returns current Gemini AI status and model info"""
+    return jsonify(chat_advisor.get_ai_info())
+
+@app.route('/api/admin/gemini-config', methods=['POST'])
+def save_gemini_config():
+    """Validate and configure Google Gemini AI API key"""
+    data = request.get_json() or {}
+    key = (data.get('gemini_api_key') or '').strip()
+
+    if not key:
+        return jsonify({'success': False, 'error': 'Vui lòng nhập Gemini API Key!'}), 400
+
+    ok, msg = chat_advisor.test_gemini_key(key)
+    if not ok:
+        return jsonify({'success': False, 'error': msg}), 400
+
+    chat_advisor.configure_gemini(key)
+
+    # Write to .env file in project directory
+    env_path = os.path.join(ROOT_DIR, '.env')
+    try:
+        lines = []
+        if os.path.exists(env_path):
+            with open(env_path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+
+        key_found = False
+        new_lines = []
+        for line in lines:
+            if line.startswith('GEMINI_API_KEY='):
+                new_lines.append(f'GEMINI_API_KEY={key}\n')
+                key_found = True
+            else:
+                new_lines.append(line)
+        if not key_found:
+            new_lines.append(f'GEMINI_API_KEY={key}\n')
+
+        with open(env_path, 'w', encoding='utf-8') as f:
+            f.writelines(new_lines)
+    except Exception as e:
+        logger.warning(f"Could not write .env file: {e}")
+
+    return jsonify({
+        'success': True,
+        'message': 'Đã kết nối Google Gemini AI thành công! Trợ lý ảo tư vấn đã sẵn sàng.',
+        'ai_info': chat_advisor.get_ai_info()
+    })
+
 # --- API ENDPOINTS ---
 
 @app.route('/api/categories', methods=['GET'])

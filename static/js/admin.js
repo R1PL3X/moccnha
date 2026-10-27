@@ -7,6 +7,7 @@ let ADMIN_THEME = localStorage.getItem('moho_theme') || 'light';
 document.addEventListener('DOMContentLoaded', () => {
   initAdminTheme();
   loadDbStatus();
+  loadAiStatus();
   loadAdminStats();
   if (document.getElementById('adminRevenueTableBody')) loadAdminRevenue();
   if (document.getElementById('adminOrdersTableBody')) loadAdminOrders();
@@ -572,7 +573,7 @@ async function loadDbStatus() {
   if (!pill) return;
 
   pill.classList.add('cursor-pointer', 'hover:opacity-80', 'transition');
-  pill.onclick = openDbConfigModal;
+  pill.onclick = () => openDbConfigModal('db');
 
   try {
     const res = await fetch('/api/db-status');
@@ -599,7 +600,39 @@ async function loadDbStatus() {
   }
 }
 
-function openDbConfigModal() {
+async function loadAiStatus() {
+  const pill = document.getElementById('ai-status-pill');
+  if (!pill) return;
+
+  pill.classList.add('cursor-pointer', 'hover:opacity-80', 'transition');
+  pill.onclick = () => openDbConfigModal('gemini');
+
+  try {
+    const res = await fetch('/api/admin/ai-status');
+    const data = await res.json();
+    pill.classList.remove('hidden');
+
+    if (data.enabled) {
+      pill.className = 'cursor-pointer hover:opacity-80 transition inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-300 dark:border-purple-700';
+      pill.innerHTML = `
+        <span class="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span>
+        <span>✨ Gemini AI (Online)</span>
+      `;
+      pill.title = 'Google Gemini AI đang kích hoạt - Tư vấn viên thông minh tự động';
+    } else {
+      pill.className = 'cursor-pointer hover:opacity-80 transition inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 dark:bg-zinc-800 dark:text-gray-300 border border-gray-300 dark:border-zinc-700';
+      pill.innerHTML = `
+        <span class="w-2 h-2 rounded-full bg-gray-400"></span>
+        <span>🤖 AI Bot Mẫu ⚙️</span>
+      `;
+      pill.title = 'Chưa cấu hình Gemini API Key. Nhấp vào đây để kích hoạt AI!';
+    }
+  } catch (e) {
+    console.warn('Could not check AI status:', e);
+  }
+}
+
+function openDbConfigModal(defaultTab = 'db') {
   let modal = document.getElementById('dbConfigModal');
   if (!modal) {
     modal = document.createElement('div');
@@ -607,78 +640,147 @@ function openDbConfigModal() {
     modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs';
     modal.innerHTML = `
       <div class="bg-white dark:bg-zinc-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-gray-200 dark:border-zinc-800 space-y-4 max-h-[90vh] overflow-y-auto">
+        <!-- MODAL HEADER & TABS -->
         <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-zinc-800">
           <div class="flex items-center gap-2">
-            <span class="text-xl">☁️</span>
-            <h3 class="font-bold text-gray-900 dark:text-white text-base">Cấu Hình Cloud Database (Supabase)</h3>
+            <span class="text-xl">⚙️</span>
+            <h3 class="font-bold text-gray-900 dark:text-white text-base">Cấu Hình Cloud & AI Tư Vấn</h3>
           </div>
           <button onclick="closeDbConfigModal()" class="w-7 h-7 rounded-full bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 text-gray-500 dark:text-gray-400 flex items-center justify-center text-sm transition">✕</button>
         </div>
 
-        <div id="dbModalStatusBanner" class="p-3.5 rounded-xl text-xs leading-relaxed">
-          Đang kiểm tra trạng thái database...
+        <!-- TAB NAVIGATION -->
+        <div class="flex border-b border-gray-200 dark:border-zinc-800 text-xs">
+          <button 
+            type="button" 
+            id="tabBtnDb" 
+            onclick="switchModalTab('db')" 
+            class="py-2 px-4 border-b-2 font-bold transition flex items-center gap-1.5 border-amber-800 text-amber-800 dark:text-amber-400"
+          >
+            <span>☁️ Supabase Cloud DB</span>
+          </button>
+          <button 
+            type="button" 
+            id="tabBtnGemini" 
+            onclick="switchModalTab('gemini')" 
+            class="py-2 px-4 border-b-2 font-medium transition flex items-center gap-1.5 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400"
+          >
+            <span>✨ Google Gemini AI</span>
+          </button>
         </div>
 
-        <form id="dbConfigForm" onsubmit="handleDbConfigSubmit(event)" class="space-y-3.5 text-xs">
-          <div>
-            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">
-              Supabase Project URL <span class="text-red-500">*</span>
-            </label>
-            <input 
-              type="url" 
-              id="cfgSupabaseUrl" 
-              placeholder="https://xxxxxxxxxxxx.supabase.co" 
-              class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-gray-900 dark:text-white focus:outline-none focus:border-amber-700 font-mono text-xs" 
-              required
-            />
-            <p class="text-[10px] text-gray-400 mt-1">Lấy tại: Supabase Dashboard &rarr; Project Settings &rarr; API &rarr; Project URL</p>
+        <!-- ==================== TAB 1: CLOUD DATABASE ==================== -->
+        <div id="modalTabDbContent" class="space-y-3.5">
+          <div id="dbModalStatusBanner" class="p-3.5 rounded-xl text-xs leading-relaxed">
+            Đang kiểm tra trạng thái database...
           </div>
 
-          <div>
-            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">
-              Supabase API Key (anon public key hoặc service_role key) <span class="text-red-500">*</span>
+          <form id="dbConfigForm" onsubmit="handleDbConfigSubmit(event)" class="space-y-3.5 text-xs">
+            <div>
+              <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                Supabase Project URL <span class="text-red-500">*</span>
+              </label>
+              <input 
+                type="url" 
+                id="cfgSupabaseUrl" 
+                placeholder="https://xxxxxxxxxxxx.supabase.co" 
+                class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-gray-900 dark:text-white focus:outline-none focus:border-amber-700 font-mono text-xs" 
+                required
+              />
+              <p class="text-[10px] text-gray-400 mt-1">Lấy tại: Supabase Dashboard &rarr; Project Settings &rarr; API &rarr; Project URL</p>
+            </div>
+
+            <div>
+              <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                Supabase API Key (anon public key hoặc service_role key) <span class="text-red-500">*</span>
+              </label>
+              <input 
+                type="text" 
+                id="cfgSupabaseKey" 
+                placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." 
+                class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-gray-900 dark:text-white focus:outline-none focus:border-amber-700 font-mono text-xs" 
+                required
+              />
+              <p class="text-[10px] text-gray-400 mt-1">Lấy tại: Supabase Dashboard &rarr; Project Settings &rarr; API &rarr; Project API keys</p>
+            </div>
+
+            <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300 cursor-pointer pt-1">
+              <input type="checkbox" id="cfgAutoSync" checked class="rounded text-amber-700 focus:ring-amber-600" />
+              <span class="font-medium text-xs">Tự động đồng bộ toàn bộ danh mục, sản phẩm và đơn hàng từ máy tính lên Cloud ngay sau khi kết nối</span>
             </label>
-            <input 
-              type="text" 
-              id="cfgSupabaseKey" 
-              placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." 
-              class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-gray-900 dark:text-white focus:outline-none focus:border-amber-700 font-mono text-xs" 
-              required
-            />
-            <p class="text-[10px] text-gray-400 mt-1">Lấy tại: Supabase Dashboard &rarr; Project Settings &rarr; API &rarr; Project API keys</p>
+
+            <div class="flex gap-2 pt-2">
+              <button 
+                type="submit" 
+                id="btnSaveDbConfig" 
+                class="flex-1 py-2.5 px-4 rounded-xl bg-amber-800 hover:bg-amber-900 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2"
+              >
+                <span>🚀 Kết Nối & Chuyển Sang Cloud</span>
+              </button>
+              <button 
+                type="button" 
+                onclick="handleManualSync()" 
+                id="btnManualSync" 
+                class="py-2.5 px-3 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 font-semibold text-xs transition"
+                title="Đẩy dữ liệu từ máy lên Cloud"
+              >
+                🔄 Đồng Bộ Dữ Liệu
+              </button>
+            </div>
+          </form>
+
+          <div class="p-3 bg-amber-50/70 dark:bg-zinc-800/60 rounded-xl border border-amber-200/50 dark:border-zinc-700/60 text-[11px] space-y-1.5 text-gray-600 dark:text-gray-400">
+            <div class="font-bold text-amber-900 dark:text-amber-300">📖 3 Bước kết nối Supabase Cloud miễn phí:</div>
+            <div>1. Truy cập <strong>supabase.com</strong> tạo tài khoản & Project mới (miễn phí).</div>
+            <div>2. Vào menu <strong>SQL Editor</strong> &rarr; Dán nội dung file <code class="bg-white dark:bg-zinc-900 px-1 py-0.5 rounded border border-amber-300/50">supabase_schema.sql</code> &rarr; Nhấn <strong>Run</strong>.</div>
+            <div>3. Copy <strong>Project URL</strong> và <strong>anon key</strong> dán vào ô trên và lưu lại.</div>
+            <div class="text-[10px] text-amber-800 dark:text-amber-400 pt-0.5">💡 Triển khai Vercel: Thêm 2 biến này vào <em>Vercel &rarr; Settings &rarr; Environment Variables</em> để không bị mất dữ liệu!</div>
+          </div>
+        </div>
+
+        <!-- ==================== TAB 2: GEMINI AI ==================== -->
+        <div id="modalTabGeminiContent" class="space-y-3.5 hidden">
+          <div id="aiModalStatusBanner" class="p-3.5 rounded-xl text-xs leading-relaxed">
+            Đang kiểm tra trạng thái Gemini AI...
           </div>
 
-          <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300 cursor-pointer pt-1">
-            <input type="checkbox" id="cfgAutoSync" checked class="rounded text-amber-700 focus:ring-amber-600" />
-            <span class="font-medium text-xs">Tự động đồng bộ toàn bộ danh mục, sản phẩm và đơn hàng từ máy tính lên Cloud ngay sau khi kết nối</span>
-          </label>
+          <form id="geminiConfigForm" onsubmit="handleGeminiConfigSubmit(event)" class="space-y-3.5 text-xs">
+            <div>
+              <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+                Google Gemini API Key <span class="text-red-500">*</span>
+              </label>
+              <input 
+                type="text" 
+                id="cfgGeminiKey" 
+                placeholder="AIzaSy..." 
+                class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-gray-900 dark:text-white focus:outline-none focus:border-purple-600 font-mono text-xs" 
+                required
+              />
+              <div class="flex items-center justify-between mt-1 text-[11px]">
+                <span class="text-gray-400">Hỗ trợ Gemini 2.5 Flash & 3.8 Flash tốc độ cao</span>
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="text-purple-600 dark:text-purple-400 font-bold hover:underline flex items-center gap-0.5">
+                  <span>👉 Lấy API Key Miễn Phí</span>
+                  <span>&rarr;</span>
+                </a>
+              </div>
+            </div>
 
-          <div class="flex gap-2 pt-2">
             <button 
               type="submit" 
-              id="btnSaveDbConfig" 
-              class="flex-1 py-2.5 px-4 rounded-xl bg-amber-800 hover:bg-amber-900 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2"
+              id="btnSaveGeminiConfig" 
+              class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-purple-700 to-indigo-800 hover:from-purple-800 hover:to-indigo-900 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2"
             >
-              <span>🚀 Kết Nối & Chuyển Sang Cloud</span>
+              <span>🚀 Kiểm Tra & Kích Hoạt Gemini AI</span>
             </button>
-            <button 
-              type="button" 
-              onclick="handleManualSync()" 
-              id="btnManualSync" 
-              class="py-2.5 px-3 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 font-semibold text-xs transition"
-              title="Đẩy dữ liệu từ máy lên Cloud"
-            >
-              🔄 Đồng Bộ Dữ Liệu
-            </button>
-          </div>
-        </form>
+          </form>
 
-        <div class="p-3 bg-amber-50/70 dark:bg-zinc-800/60 rounded-xl border border-amber-200/50 dark:border-zinc-700/60 text-[11px] space-y-1.5 text-gray-600 dark:text-gray-400">
-          <div class="font-bold text-amber-900 dark:text-amber-300">📖 3 Bước kết nối Supabase Cloud miễn phí:</div>
-          <div>1. Truy cập <strong>supabase.com</strong> tạo tài khoản & Project mới (miễn phí).</div>
-          <div>2. Vào menu <strong>SQL Editor</strong> &rarr; Dán nội dung file <code class="bg-white dark:bg-zinc-900 px-1 py-0.5 rounded border border-amber-300/50">supabase_schema.sql</code> &rarr; Nhấn <strong>Run</strong>.</div>
-          <div>3. Copy <strong>Project URL</strong> và <strong>anon key</strong> dán vào ô trên và lưu lại.</div>
-          <div class="text-[10px] text-amber-800 dark:text-amber-400 pt-0.5">💡 Nếu triển khai Vercel: Thêm 2 biến này vào <em>Vercel &rarr; Settings &rarr; Environment Variables</em> để Vercel không bao giờ bị mất dữ liệu!</div>
+          <div class="p-3 bg-purple-50/70 dark:bg-zinc-800/60 rounded-xl border border-purple-200/50 dark:border-zinc-700/60 text-[11px] space-y-1.5 text-gray-600 dark:text-gray-400">
+            <div class="font-bold text-purple-900 dark:text-purple-300">✨ Lợi ích vượt trội của Gemini AI:</div>
+            <div>• Tự động đọc và ghi nhớ toàn bộ sản phẩm thực tế từ Database của moccnha.</div>
+            <div>• Hiểu tự nhiên các câu hỏi phức tạp như: <em>"ở đây gồm những bàn ghế nào"</em>, <em>"tư vấn combo phòng ngủ nhỏ"</em>, <em>"phí ship quận 7 bao nhiêu"</em>.</div>
+            <div>• Trả lời lịch sự, thân thiện, báo giá chính xác và gợi ý sản phẩm phù hợp.</div>
+            <div class="text-[10px] text-purple-800 dark:text-purple-400 pt-0.5">💡 Triển khai Vercel: Thêm biến <code>GEMINI_API_KEY</code> vào <em>Vercel &rarr; Settings &rarr; Environment Variables</em> để kích hoạt AI trên web thật!</div>
+          </div>
         </div>
       </div>
     `;
@@ -686,7 +788,32 @@ function openDbConfigModal() {
   }
 
   modal.classList.remove('hidden');
+  switchModalTab(defaultTab);
   updateDbModalBanner();
+  updateAiModalBanner();
+}
+
+function switchModalTab(tab) {
+  const tabDb = document.getElementById('modalTabDbContent');
+  const tabGemini = document.getElementById('modalTabGeminiContent');
+  const btnDb = document.getElementById('tabBtnDb');
+  const btnGemini = document.getElementById('tabBtnGemini');
+
+  if (tab === 'gemini') {
+    tabDb?.classList.add('hidden');
+    tabGemini?.classList.remove('hidden');
+    btnDb?.classList.remove('border-amber-800', 'text-amber-800', 'dark:text-amber-400', 'font-bold');
+    btnDb?.classList.add('border-transparent', 'text-gray-500', 'font-medium');
+    btnGemini?.classList.add('border-purple-600', 'text-purple-600', 'dark:text-purple-400', 'font-bold');
+    btnGemini?.classList.remove('border-transparent', 'text-gray-500', 'font-medium');
+  } else {
+    tabGemini?.classList.add('hidden');
+    tabDb?.classList.remove('hidden');
+    btnGemini?.classList.remove('border-purple-600', 'text-purple-600', 'dark:text-purple-400', 'font-bold');
+    btnGemini?.classList.add('border-transparent', 'text-gray-500', 'font-medium');
+    btnDb?.classList.add('border-amber-800', 'text-amber-800', 'dark:text-amber-400', 'font-bold');
+    btnDb?.classList.remove('border-transparent', 'text-gray-500', 'font-medium');
+  }
 }
 
 function closeDbConfigModal() {
@@ -721,6 +848,36 @@ async function updateDbModalBanner() {
     }
   } catch (e) {
     banner.innerText = 'Chưa kiểm tra được trạng thái database';
+  }
+}
+
+async function updateAiModalBanner() {
+  const banner = document.getElementById('aiModalStatusBanner');
+  if (!banner) return;
+  try {
+    const res = await fetch('/api/admin/ai-status');
+    const data = await res.json();
+    if (data.enabled) {
+      banner.className = 'p-3.5 rounded-xl text-xs leading-relaxed bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 text-purple-900 dark:text-purple-300';
+      banner.innerHTML = `
+        <div class="font-bold flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span>
+          Google Gemini AI Đang Kích Hoạt
+        </div>
+        <div class="mt-1 text-[11px] opacity-90">Mô hình: <span class="font-bold">${data.model}</span> (Key: <span class="font-mono">${data.key_preview || '***'}</span>). Trợ lý tư vấn khách hàng tự động hiểu ngữ nghĩa tự nhiên và tư vấn sản phẩm chính xác.</div>
+      `;
+    } else {
+      banner.className = 'p-3.5 rounded-xl text-xs leading-relaxed bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-300';
+      banner.innerHTML = `
+        <div class="font-bold flex items-center gap-1.5">
+          <span>⚠️</span>
+          Chưa Cấu Hình Gemini AI
+        </div>
+        <div class="mt-1 text-[11px] opacity-90">Hiện tại chatbox đang dùng bộ quy tắc mẫu (rule-based). Hãy nhập Gemini API Key dưới đây để kích hoạt AI thông minh vượt trội.</div>
+      `;
+    }
+  } catch (e) {
+    banner.innerText = 'Chưa kiểm tra được trạng thái Gemini AI';
   }
 }
 
@@ -767,6 +924,45 @@ async function handleDbConfigSubmit(e) {
   } finally {
     btn.disabled = false;
     btn.innerHTML = `<span>🚀 Kết Nối & Chuyển Sang Cloud</span>`;
+  }
+}
+
+async function handleGeminiConfigSubmit(e) {
+  e.preventDefault();
+  const key = document.getElementById('cfgGeminiKey').value.trim();
+  const btn = document.getElementById('btnSaveGeminiConfig');
+
+  if (!key) {
+    showToast('Vui lòng nhập Gemini API Key!', 'error');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = `<span>⏳ Đang kiểm tra API Key với Google...</span>`;
+
+  try {
+    const res = await fetch('/api/admin/gemini-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ gemini_api_key: key })
+    });
+
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast('🎉 Kích hoạt Google Gemini AI thành công!', 'success');
+      loadAiStatus();
+      updateAiModalBanner();
+      setTimeout(() => {
+        closeDbConfigModal();
+      }, 1500);
+    } else {
+      showToast(data.error || 'API Key không hợp lệ hoặc không có quyền truy cập Gemini API!', 'error');
+    }
+  } catch (err) {
+    showToast('Lỗi gửi cấu hình: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span>🚀 Kiểm Tra & Kích Hoạt Gemini AI</span>`;
   }
 }
 

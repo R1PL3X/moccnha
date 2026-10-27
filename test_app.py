@@ -329,6 +329,30 @@ class MohoStoreTestCase(unittest.TestCase):
         )
         self.assertEqual(invalid_res.status_code, 400)
 
+    def test_gemini_config_endpoints(self):
+        # 1. AI status endpoint
+        res = self.client.get('/api/admin/ai-status')
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.data)
+        self.assertIn('provider', data)
+        self.assertEqual(data['provider'], 'Google Gemini AI')
+
+        # 2. Validation for empty Gemini API key
+        empty_res = self.client.post(
+            '/api/admin/gemini-config',
+            data=json.dumps({'gemini_api_key': ''}),
+            content_type='application/json'
+        )
+        self.assertEqual(empty_res.status_code, 400)
+
+        # 3. Validation for invalid Gemini API key
+        invalid_res = self.client.post(
+            '/api/admin/gemini-config',
+            data=json.dumps({'gemini_api_key': 'invalid_fake_key_123'}),
+            content_type='application/json'
+        )
+        self.assertEqual(invalid_res.status_code, 400)
+
 if __name__ == '__main__':
     unittest.main()
 

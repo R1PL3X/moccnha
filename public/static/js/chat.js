@@ -76,7 +76,7 @@
                 <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
               </div>
               <div class="text-[11px] text-amber-200/90 flex items-center gap-1">
-                <span>moccnha • Phản hồi tức thì</span>
+                <span>moccnha AI • Phản hồi tức thì</span>
               </div>
             </div>
           </div>
@@ -91,7 +91,8 @@
 
         <!-- QUICK PROMPT CHIPS -->
         <div id="mocChatChips" class="px-3 py-2 bg-amber-50/60 dark:bg-zinc-800/50 border-b border-gray-100 dark:border-zinc-800 flex gap-1.5 overflow-x-auto text-[11px] no-scrollbar">
-          <button onclick="sendQuickPrompt('Combo HOBRO 1m6')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-white dark:bg-zinc-800 border border-amber-200 dark:border-zinc-700 hover:border-amber-700 text-amber-900 dark:text-amber-300 transition shadow-xs font-medium">🪑 Combo HOBRO</button>
+          <button onclick="sendQuickPrompt('ở đây gồm những bàn ghế nào')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-white dark:bg-zinc-800 border border-amber-200 dark:border-zinc-700 hover:border-amber-700 text-amber-900 dark:text-amber-300 transition shadow-xs font-medium">🪑 Các mẫu bàn ghế</button>
+          <button onclick="sendQuickPrompt('Combo HOBRO 1m6')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-white dark:bg-zinc-800 border border-amber-200 dark:border-zinc-700 hover:border-amber-700 text-amber-900 dark:text-amber-300 transition shadow-xs font-medium">🛏️ Combo HOBRO</button>
           <button onclick="sendQuickPrompt('Bộ sưu tập VLINE')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-white dark:bg-zinc-800 border border-amber-200 dark:border-zinc-700 hover:border-amber-700 text-amber-900 dark:text-amber-300 transition shadow-xs font-medium">🛋️ BST VLINE</button>
           <button onclick="sendQuickPrompt('Phí giao hàng & lắp đặt')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-white dark:bg-zinc-800 border border-amber-200 dark:border-zinc-700 hover:border-amber-700 text-amber-900 dark:text-amber-300 transition shadow-xs font-medium">🚚 Giao hàng</button>
           <button onclick="sendQuickPrompt('Chính sách bảo hành')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-white dark:bg-zinc-800 border border-amber-200 dark:border-zinc-700 hover:border-amber-700 text-amber-900 dark:text-amber-300 transition shadow-xs font-medium">🛡️ Bảo hành 2 năm</button>
