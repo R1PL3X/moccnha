@@ -606,6 +606,20 @@ def admin_delete_chat_session(session_id):
     db_adapter.delete_chat_session(session_id)
     return jsonify({'success': True, 'message': 'Đã xóa đoạn hội thoại'})
 
+@app.route('/api/admin/reset-demo-data', methods=['POST'])
+def reset_demo_data():
+    try:
+        from database import init_db, seed_data, get_db_connection
+        init_db()
+        conn = get_db_connection()
+        seed_data(conn)
+        conn.close()
+        if db_adapter.is_supabase_enabled():
+            db_adapter.sync_local_to_supabase()
+        return jsonify({'success': True, 'message': 'Đã nạp lại dữ liệu mẫu thành công!', 'stats': db_adapter.get_stats()})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.after_request
 def add_no_cache_headers(response):
     response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'

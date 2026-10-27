@@ -147,9 +147,14 @@
           <button onclick="setOrderFilter('cancelled')" data-filter="cancelled" class="order-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300">❌ Đã hủy</button>
         </div>
 
-        <button onclick="loadAdminOrders()" class="text-xs bg-amber-50 dark:bg-zinc-800 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-zinc-700 px-3 py-1.5 rounded-lg hover:bg-amber-100 transition flex items-center gap-1 self-start sm:self-auto font-medium">
-          ⟳ Làm mới đơn hàng
-        </button>
+        <div class="flex items-center gap-2">
+          <button onclick="handleResetDemoData()" class="text-xs bg-gray-50 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-zinc-700 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-700 transition flex items-center gap-1 font-medium" title="Khôi phục 12 sản phẩm và 5 đơn hàng mẫu">
+            ⚡ Nạp dữ liệu mẫu
+          </button>
+          <button onclick="loadAdminOrders()" class="text-xs bg-amber-50 dark:bg-zinc-800 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-zinc-700 px-3 py-1.5 rounded-lg hover:bg-amber-100 transition flex items-center gap-1 self-start sm:self-auto font-medium">
+            ⟳ Làm mới đơn hàng
+          </button>
+        </div>
       </div>
 
       <!-- MAIN ORDERS TABLE -->
@@ -180,6 +185,6 @@
 
   <div id="toastContainer" class="fixed top-16 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-  <script src="/static/js/admin.js?v=8"></script>
+  <script src="/static/js/admin.js?v=9"></script>
 </body>
 </html>

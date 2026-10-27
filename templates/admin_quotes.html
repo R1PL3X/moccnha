@@ -143,9 +143,14 @@
             <h3 class="text-sm font-bold text-gray-900 dark:text-white">Danh Sách Yêu Cầu Báo Giá Dự Án (B2B)</h3>
             <p class="text-xs text-gray-500 dark:text-gray-400">Tiếp nhận thông tin khách hàng cần cung cấp số lượng lớn, đối tác thiết kế và chủ đầu tư dự án.</p>
           </div>
-          <button onclick="loadAdminQuotes()" class="text-xs bg-blue-50 dark:bg-zinc-800 text-blue-800 dark:text-blue-400 border border-blue-200 dark:border-zinc-700 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition flex items-center gap-1 self-start sm:self-auto font-medium">
-            ⟳ Làm mới yêu cầu
-          </button>
+          <div class="flex items-center gap-2 self-start sm:self-auto">
+            <button onclick="handleResetDemoData()" class="text-xs bg-gray-50 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-zinc-700 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-700 transition flex items-center gap-1 font-medium" title="Khôi phục 12 sản phẩm và 5 đơn hàng mẫu">
+              ⚡ Nạp dữ liệu mẫu
+            </button>
+            <button onclick="loadAdminQuotes()" class="text-xs bg-blue-50 dark:bg-zinc-800 text-blue-800 dark:text-blue-400 border border-blue-200 dark:border-zinc-700 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition flex items-center gap-1 font-medium">
+              ⟳ Làm mới yêu cầu
+            </button>
+          </div>
         </div>
 
         <div class="overflow-x-auto">
@@ -173,6 +178,6 @@
 
   <div id="toastContainer" class="fixed top-16 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-  <script src="/static/js/admin.js?v=8"></script>
+  <script src="/static/js/admin.js?v=9"></script>
 </body>
 </html>

@@ -210,6 +210,9 @@
             <p class="text-xs text-gray-500 dark:text-gray-400">Danh sách các mặt hàng đang được trưng bày và bán trên website.</p>
           </div>
           <div class="flex items-center gap-2">
+            <button onclick="handleResetDemoData()" class="text-xs bg-gray-50 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-zinc-700 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-700 transition flex items-center gap-1 font-medium" title="Khôi phục 12 sản phẩm và 5 đơn hàng mẫu">
+              ⚡ Nạp dữ liệu mẫu
+            </button>
             <button onclick="syncAdminSoldCounts()" class="text-xs bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-3 py-1.5 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition flex items-center gap-1 font-medium" title="Tính lại số lượng đã bán từ lịch sử đơn hàng">
               ⚡ Đồng bộ lượt bán
             </button>
@@ -313,6 +316,6 @@
     </div>
   </div>
 
-  <script src="/static/js/admin.js?v=8"></script>
+  <script src="/static/js/admin.js?v=9"></script>
 </body>
 </html>

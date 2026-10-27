@@ -353,6 +353,15 @@ class MohoStoreTestCase(unittest.TestCase):
         )
         self.assertEqual(invalid_res.status_code, 400)
 
+    def test_reset_demo_data_endpoint(self):
+        res = self.client.post('/api/admin/reset-demo-data')
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.data)
+        self.assertTrue(data.get('success'))
+        self.assertIn('stats', data)
+        self.assertGreaterEqual(data['stats']['total_orders'], 5)
+        self.assertGreaterEqual(data['stats']['total_products'], 12)
+
 if __name__ == '__main__':
     unittest.main()
 

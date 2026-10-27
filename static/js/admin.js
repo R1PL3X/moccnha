@@ -131,10 +131,14 @@ async function loadAdminRevenue() {
   try {
     tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-400">Đang tổng hợp dữ liệu doanh thu...</td></tr>`;
     const res = await fetch('/api/orders');
-    const orders = await res.json() || [];
+    const data = await res.json();
+    const orders = Array.isArray(data) ? data : [];
 
     if (orders.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-400">Chưa có giao dịch phát sinh doanh thu</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-400">
+        <div class="text-3xl mb-1.5">💰</div>
+        <div class="font-bold text-gray-600 dark:text-gray-300">Chưa có giao dịch phát sinh doanh thu</div>
+      </td></tr>`;
       return;
     }
 
@@ -232,7 +236,8 @@ async function loadAdminOrders() {
   try {
     tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-gray-400">Đang tải danh sách đơn hàng...</td></tr>`;
     const res = await fetch('/api/orders');
-    ALL_ADMIN_ORDERS = await res.json() || [];
+    const data = await res.json();
+    ALL_ADMIN_ORDERS = Array.isArray(data) ? data : [];
     renderAdminOrdersTable();
   } catch (err) {
     console.error(err);
@@ -244,13 +249,19 @@ function renderAdminOrdersTable() {
   const tbody = document.getElementById('adminOrdersTableBody');
   if (!tbody) return;
 
+  if (!Array.isArray(ALL_ADMIN_ORDERS)) ALL_ADMIN_ORDERS = [];
+
   let filtered = ALL_ADMIN_ORDERS;
   if (CURRENT_ORDER_FILTER !== 'all') {
-    filtered = ALL_ADMIN_ORDERS.filter(o => o.status === CURRENT_ORDER_FILTER);
+    filtered = ALL_ADMIN_ORDERS.filter(o => o && o.status === CURRENT_ORDER_FILTER);
   }
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-gray-400">Không tìm thấy đơn hàng nào phù hợp với bộ lọc</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-gray-400">
+      <div class="text-3xl mb-1.5">📦</div>
+      <div class="font-bold text-gray-600 dark:text-gray-300">Chưa có đơn hàng nào</div>
+      <div class="text-xs text-gray-400 mt-1">Các đơn hàng mới phát sinh từ khách hàng sẽ hiển thị tại đây.</div>
+    </td></tr>`;
     return;
   }
 
@@ -339,11 +350,15 @@ async function loadAdminProducts() {
   try {
     tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-gray-400">Đang tải kho sản phẩm...</td></tr>`;
     const res = await fetch('/api/products');
-    const products = await res.json();
+    const data = await res.json();
+    const products = Array.isArray(data) ? data : [];
     ALL_ADMIN_PRODUCTS = products;
 
     if (products.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-gray-400">Chưa có sản phẩm nào</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-gray-400">
+        <div class="text-3xl mb-1.5">🪑</div>
+        <div class="font-bold text-gray-600 dark:text-gray-300">Chưa có sản phẩm nào trong kho</div>
+      </td></tr>`;
       return;
     }
 
@@ -993,10 +1008,14 @@ async function loadAdminQuotes() {
   try {
     tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-400">Đang tải danh sách yêu cầu báo giá...</td></tr>`;
     const res = await fetch('/api/quotes');
-    const quotes = await res.json();
+    const data = await res.json();
+    const quotes = Array.isArray(data) ? data : [];
 
-    if (!quotes || quotes.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-400">Chưa có yêu cầu báo giá nào từ khách hàng</td></tr>`;
+    if (quotes.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-400">
+        <div class="text-3xl mb-1.5">📄</div>
+        <div class="font-bold text-gray-600 dark:text-gray-300">Chưa có yêu cầu báo giá nào từ khách hàng</div>
+      </td></tr>`;
       return;
     }
 
@@ -1209,69 +1228,6 @@ async function selectAdminChatSession(sessionId) {
       console.error(err);
       messagesArea.innerHTML = `<div class="p-4 text-center text-red-500 text-xs">Lỗi khi tải tin nhắn</div>`;
     }
-  }
-}
-
-async function handleAdminSendReply(e) {
-  e.preventDefault();
-  if (!ACTIVE_ADMIN_SESSION_ID) return;
-
-  const input = document.getElementById('adminReplyInput');
-  const msg = input.value.trim();
-  if (!msg) return;
-
-  input.value = '';
-
-  try {
-    const res = await fetch('/api/admin/chat/reply', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        session_id: ACTIVE_ADMIN_SESSION_ID,
-        message: msg
-      })
-    });
-
-    const data = await res.json();
-    if (res.ok && data.success) {
-      showToast('Đã gửi tin nhắn tư vấn thành công!', 'success');
-      selectAdminChatSession(ACTIVE_ADMIN_SESSION_ID);
-    } else {
-      showToast(data.error || 'Gửi tin nhắn thất bại', 'error');
-    }
-  } catch (err) {
-    showToast('Lỗi mạng', 'error');
-  }
-}
-
-async function deleteCurrentChatSession() {
-  if (!ACTIVE_ADMIN_SESSION_ID) return;
-  if (!confirm('Bạn có chắc chắn muốn xóa toàn bộ cuộc hội thoại này?')) return;
-
-  try {
-    const res = await fetch(`/api/admin/chat/sessions/${encodeURIComponent(ACTIVE_ADMIN_SESSION_ID)}`, {
-      method: 'DELETE'
-    });
-    const data = await res.json();
-    if (res.ok && data.success) {
-      showToast('Đã xóa cuộc hội thoại', 'info');
-      ACTIVE_ADMIN_SESSION_ID = null;
-      document.getElementById('adminActiveCustomerName').textContent = 'Chọn một cuộc hội thoại từ danh sách';
-      document.getElementById('adminActiveSessionMeta').textContent = 'Chưa chọn cuộc hội thoại nào';
-      document.getElementById('adminChatActions').classList.add('hidden');
-      document.getElementById('adminReplyInput').disabled = true;
-      document.getElementById('adminReplySendBtn').disabled = true;
-      document.getElementById('adminChatMessagesArea').innerHTML = `
-        <div class="h-full flex flex-col items-center justify-center text-gray-400 text-xs">
-          <span class="text-3xl mb-2">💬</span>
-          <p>Vui lòng bấm vào một phiên chat ở cột bên trái để xem lịch sử và trả lời khách hàng.</p>
-        </div>
-      `;
-      loadAdminChatSessions();
-      loadAdminStats();
-    }
-  } catch (err) {
-    showToast('Lỗi khi xóa cuộc hội thoại', 'error');
   }
 }
 
@@ -1501,6 +1457,23 @@ async function deleteCurrentChatSession() {
     }
   } catch (err) {
     showToast('Lỗi khi xóa cuộc hội thoại', 'error');
+  }
+}
+
+async function handleResetDemoData() {
+  if (!confirm('Bạn có muốn nạp lại bộ dữ liệu gốc (12 sản phẩm, danh mục, đơn hàng mẫu) không?')) return;
+  try {
+    showToast('⏳ Đang nạp dữ liệu mẫu...', 'info');
+    const res = await fetch('/api/admin/reset-demo-data', { method: 'POST' });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast('🎉 Nạp dữ liệu mẫu thành công!', 'success');
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      showToast(data.error || 'Nạp dữ liệu mẫu thất bại', 'error');
+    }
+  } catch (e) {
+    showToast('Lỗi kết nối: ' + e.message, 'error');
   }
 }
 

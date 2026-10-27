@@ -166,8 +166,7 @@ def _init_db_internal():
 
     if count == 0:
         seed_data(conn)
-    else:
-        update_product_highlights(conn)
+    update_product_highlights(conn)
 
     # Automatically sync sold_count for any products with placed orders
     try:
@@ -570,8 +569,79 @@ def seed_data(conn):
         VALUES ('Quản Trị Viên MOHO', 'admin@moho.vn', '0971141140', 'admin123', 'admin')
     ''')
 
+    # Seed sample orders if orders table is empty
+    cursor.execute('SELECT COUNT(*) FROM orders')
+    if cursor.fetchone()[0] == 0:
+        sample_orders = [
+            (
+                1, 'MOC-84210', 'Nguyễn Thị Minh Hạnh', '0912345678', 'minhhanh@gmail.com',
+                'Số 45 Lê Duẩn, Phường Bến Nghé, Quận 1, TP.HCM', 'BANK_TRANSFER',
+                'Giao trong giờ hành chính, gọi trước 30p',
+                json.dumps([
+                    {'id': 1, 'title': 'Combo Giường - Tủ Đầu Giường VLINE 1m6 | Màu Tự Nhiên', 'quantity': 1, 'price': 8990000, 'color': 'Màu Tự Nhiên'},
+                    {'id': 11, 'title': 'Bàn Làm Việc Tối Giản MOHO WORK 01', 'quantity': 1, 'price': 2290000, 'color': 'Gỗ Tự Nhiên Chân Đen'}
+                ]),
+                11280000, 'completed'
+            ),
+            (
+                1, 'MOC-73915', 'Trần Văn Hoàng', '0987654321', 'hoangtran.arc@gmail.com',
+                'Căn hộ 12.04 Tòa S2.05 Vinhomes Grand Park, TP. Thủ Đức, TP.HCM', 'COD',
+                'Hỗ trợ mang lên chung cư tầng 12 có thang máy',
+                json.dumps([
+                    {'id': 3, 'title': 'Combo Giường - Tủ Đầu Giường HOBRO 1m6', 'quantity': 1, 'price': 8990000, 'color': 'Màu Gỗ Sồi'},
+                    {'id': 7, 'title': 'Sofa Băng Phòng Khách VLINE Bọc Vải Cao Cấp', 'quantity': 1, 'price': 6490000, 'color': 'Màu Xám Tro'}
+                ]),
+                15480000, 'shipping'
+            ),
+            (
+                1, 'MOC-62841', 'Lê Thu Trang', '0903112233', 'thutrang.design@yahoo.com',
+                'Biệt thự BT4-18 Khu Đô Thị Ciputra, Tây Hồ, Hà Nội', 'BANK_TRANSFER',
+                'Lắp đặt hoàn thiện phòng ăn',
+                json.dumps([
+                    {'id': 10, 'title': 'Bộ Bàn Ăn Gỗ Tự Nhiên Kèm 4 Ghế VLINE', 'quantity': 1, 'price': 6990000, 'color': 'Gỗ Tự Nhiên'},
+                    {'id': 6, 'title': 'Tủ Kệ Tivi Gỗ Cánh Mây Tự Nhiên VLINE', 'quantity': 1, 'price': 3490000, 'color': 'Màu Tự Nhiên'}
+                ]),
+                10480000, 'confirmed'
+            ),
+            (
+                1, 'MOC-51732', 'Phạm Đức Anh', '0938445566', 'ducanh.pham@gmail.com',
+                'Số 88 Trần Phú, Hà Đông, Hà Nội', 'COD',
+                'Giao vào thứ 7 cuối tuần',
+                json.dumps([
+                    {'id': 8, 'title': 'Sofa Giường Thông Minh Gấp Gọn Đa Năng MOHO', 'quantity': 1, 'price': 4890000, 'color': 'Màu Be Tinh Tế'}
+                ]),
+                4890000, 'pending'
+            ),
+            (
+                1, 'MOC-40621', 'Vũ Mai Lan', '0919887766', 'mailan.vu@gmail.com',
+                'Số 234 Nguyễn Thị Minh Khai, Quận 3, TP.HCM', 'BANK_TRANSFER',
+                'Đã thanh toán qua VietQR',
+                json.dumps([
+                    {'id': 12, 'title': 'Tủ Quần Áo 3 Cánh MOHO VIENNA', 'quantity': 1, 'price': 7990000, 'color': 'Màu Sồi Trắng'}
+                ]),
+                7990000, 'completed'
+            )
+        ]
+        cursor.executemany('''
+            INSERT INTO orders (
+                user_id, order_code, customer_name, customer_phone, customer_email,
+                customer_address, payment_method, note, items, total_amount, status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', sample_orders)
+
+    # Seed sample quotes if quotes table is empty
+    cursor.execute('SELECT COUNT(*) FROM quotes')
+    if cursor.fetchone()[0] == 0:
+        sample_quotes = [
+            ("Công ty TNHH Đầu Tư Green Living", "0908123456", "contact@greenliving.vn", "Homestay / Khách sạn", "Cần báo giá trọn gói 12 phòng ngủ gồm giường 1m6, táp đầu giường và tủ áo phong cách Scandinavian.", "contacted"),
+            ("Kiến Trúc Sư Đoàn Minh Quân", "0933789012", "quan.arch@gmail.com", "Căn hộ cho thuê", "Báo giá sỉ 5 bộ bàn ăn 4 ghế VLINE và 5 sofa băng cho dự án chung cư Masteri Centre Point.", "pending")
+        ]
+        cursor.executemany('''
+            INSERT INTO quotes (fullname, phone, email, project_type, note, status)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', sample_quotes)
+
     conn.commit()
-    conn.close()
 
 if __name__ == '__main__':
     init_db()

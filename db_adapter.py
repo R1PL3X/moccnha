@@ -53,6 +53,24 @@ def init_supabase():
 # Attempt initial connection
 init_supabase()
 
+def auto_seed_supabase_if_empty():
+    """Ensure Supabase Cloud database has products and categories seeded"""
+    if not is_supabase_enabled():
+        return
+    try:
+        p_res = supabase_client.table('products').select('id', count='exact').limit(1).execute()
+        count = p_res.count if p_res.count is not None else len(p_res.data or [])
+        if count == 0:
+            print("[DB ADAPTER] -> Supabase Cloud has 0 products. Auto-seeding initial store catalog...")
+            init_db()
+            sync_local_to_supabase()
+            print("[DB ADAPTER] -> Auto-seeding complete! Products, categories, and sample orders are now live on Cloud.")
+    except Exception as e:
+        logger.warning(f"Could not auto-seed Supabase: {e}")
+
+if _using_supabase:
+    auto_seed_supabase_if_empty()
+
 def test_and_configure_supabase(url, key):
     """Test connection to Supabase with given credentials and set as active DB if valid"""
     global supabase_client, _using_supabase, SUPABASE_URL, SUPABASE_KEY
@@ -70,6 +88,7 @@ def test_and_configure_supabase(url, key):
         supabase_client = client
         _using_supabase = True
         print(f"[DB ADAPTER] -> Successfully switched to Supabase Cloud Database: {url}")
+        auto_seed_supabase_if_empty()
         return True, "Kết nối Supabase Cloud thành công!"
     except Exception as e:
         return False, f"Lỗi kết nối Supabase: {str(e)}"
@@ -268,23 +287,29 @@ def get_categories():
             cats_res = supabase_client.table('categories').select('*').order('id').execute()
             categories = cats_res.data or []
             
-            # Fetch products to calculate product counts
-            prod_res = supabase_client.table('products').select('category').execute()
-            counts = {}
-            for p in (prod_res.data or []):
-                cat_name = p.get('category')
-                counts[cat_name] = counts.get(cat_name, 0) + 1
-                
-            for c in categories:
-                c['product_count'] = counts.get(c.get('name'), 0)
-                
-            return categories
+            if not categories:
+                auto_seed_supabase_if_empty()
+                cats_res = supabase_client.table('categories').select('*').order('id').execute()
+                categories = cats_res.data or []
+
+            if categories:
+                # Fetch products to calculate product counts
+                prod_res = supabase_client.table('products').select('category').execute()
+                counts = {}
+                for p in (prod_res.data or []):
+                    cat_name = p.get('category')
+                    counts[cat_name] = counts.get(cat_name, 0) + 1
+                    
+                for c in categories:
+                    c['product_count'] = counts.get(c.get('name'), 0)
+                    
+                return categories
         except Exception as e:
             logger.error(f"Supabase get_categories error: {e}")
-            # Fall back to SQLite if error
             pass
 
-    # SQLite Fallback
+    # SQLite Fallback (guaranteed to have categories)
+    init_db()
     conn = get_db_connection()
     rows = conn.execute('''
         SELECT c.*, COUNT(p.id) as product_count 
@@ -327,12 +352,20 @@ def get_products(category=None, search=None, bestseller=None, promo=None, sort='
                 query = query.order('id', desc=False)
                 
             res = query.execute()
-            return [format_product_dict(p) for p in (res.data or [])]
+            data = res.data or []
+            if not data and not category and not search:
+                auto_seed_supabase_if_empty()
+                res = query.execute()
+                data = res.data or []
+
+            if data:
+                return [format_product_dict(p) for p in data]
         except Exception as e:
             logger.error(f"Supabase get_products error: {e}")
             pass
 
-    # SQLite Fallback
+    # SQLite Fallback (guaranteed to have products)
+    init_db()
     conn = get_db_connection()
     q = 'SELECT * FROM products WHERE 1=1'
     params = []
@@ -612,12 +645,19 @@ def get_orders():
     if is_supabase_enabled():
         try:
             res = supabase_client.table('orders').select('*').order('created_at', desc=True).execute()
-            return [format_order_dict(o) for o in (res.data or [])]
+            orders = res.data or []
+            if not orders:
+                auto_seed_supabase_if_empty()
+                res = supabase_client.table('orders').select('*').order('created_at', desc=True).execute()
+                orders = res.data or []
+            if orders:
+                return [format_order_dict(o) for o in orders]
         except Exception as e:
             logger.error(f"Supabase get_orders error: {e}")
             pass
 
-    # SQLite Fallback
+    # SQLite Fallback (guaranteed to have sample orders)
+    init_db()
     conn = get_db_connection()
     rows = conn.execute('SELECT * FROM orders ORDER BY created_at DESC').fetchall()
     conn.close()
@@ -844,40 +884,46 @@ def get_stats():
             # Count products
             p_res = supabase_client.table('products').select('id', count='exact').execute()
             total_products = p_res.count if p_res.count is not None else len(p_res.data or [])
+            if total_products == 0:
+                auto_seed_supabase_if_empty()
+                p_res = supabase_client.table('products').select('id', count='exact').execute()
+                total_products = p_res.count if p_res.count is not None else len(p_res.data or [])
             
-            # Count orders and calculate revenue
-            o_res = supabase_client.table('orders').select('total_amount, status').execute()
-            orders = o_res.data or []
-            total_orders = len(orders)
-            total_revenue = sum(o.get('total_amount', 0) for o in orders if o.get('status') != 'cancelled')
+            if total_products > 0:
+                # Count orders and calculate revenue
+                o_res = supabase_client.table('orders').select('total_amount, status').execute()
+                orders = o_res.data or []
+                total_orders = len(orders)
+                total_revenue = sum(o.get('total_amount', 0) for o in orders if o.get('status') != 'cancelled')
 
-            # Count quotes
-            q_res = supabase_client.table('quotes').select('id', count='exact').execute()
-            total_quotes = q_res.count if q_res.count is not None else len(q_res.data or [])
+                # Count quotes
+                q_res = supabase_client.table('quotes').select('id', count='exact').execute()
+                total_quotes = q_res.count if q_res.count is not None else len(q_res.data or [])
 
-            # Count chats
-            try:
-                c_res = supabase_client.table('chat_sessions').select('unread_count').execute()
-                sessions = c_res.data or []
-                total_chats = len(sessions)
-                unread_chats = sum(1 for s in sessions if (s.get('unread_count') or 0) > 0)
-            except Exception:
-                total_chats = 0
-                unread_chats = 0
-            
-            return {
-                'total_products': total_products,
-                'total_orders': total_orders,
-                'total_revenue': total_revenue,
-                'total_quotes': total_quotes,
-                'total_chats': total_chats,
-                'unread_chats': unread_chats
-            }
+                # Count chats
+                try:
+                    c_res = supabase_client.table('chat_sessions').select('unread_count').execute()
+                    sessions = c_res.data or []
+                    total_chats = len(sessions)
+                    unread_chats = sum(1 for s in sessions if (s.get('unread_count') or 0) > 0)
+                except Exception:
+                    total_chats = 0
+                    unread_chats = 0
+                
+                return {
+                    'total_products': total_products,
+                    'total_orders': total_orders,
+                    'total_revenue': total_revenue,
+                    'total_quotes': total_quotes,
+                    'total_chats': total_chats,
+                    'unread_chats': unread_chats
+                }
         except Exception as e:
             logger.error(f"Supabase get_stats error: {e}")
             pass
 
-    # SQLite Fallback
+    # SQLite Fallback (guaranteed to have metrics)
+    init_db()
     conn = get_db_connection()
     total_products = conn.execute('SELECT COUNT(*) FROM products').fetchone()[0]
     total_orders = conn.execute('SELECT COUNT(*) FROM orders').fetchone()[0]
