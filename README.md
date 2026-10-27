@@ -1,4 +1,4 @@
-# Mộc Nhà (Moccnha) - Nền tảng thương mại điện tử và quản lý nội thất đồ gỗ
+# Mộc Nhà - Nền tảng thương mại điện tử và quản lý nội thất đồ gỗ
 
 Một hệ thống quản lý và nền tảng thương mại điện tử toàn diện, được xây dựng bằng Python. Dự án bao gồm trang dành cho khách hàng (B2C & B2B), bảng điều khiển quản trị để quản lý đơn hàng, doanh thu, sản phẩm, và được tích hợp một trợ lý ảo thông minh (Chat Advisor).
 
