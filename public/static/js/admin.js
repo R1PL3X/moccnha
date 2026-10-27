@@ -571,28 +571,223 @@ async function loadDbStatus() {
   const pill = document.getElementById('db-status-pill');
   if (!pill) return;
 
+  pill.classList.add('cursor-pointer', 'hover:opacity-80', 'transition');
+  pill.onclick = openDbConfigModal;
+
   try {
     const res = await fetch('/api/db-status');
     const data = await res.json();
     pill.classList.remove('hidden');
 
     if (data.mode === 'supabase') {
-      pill.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700';
+      pill.className = 'cursor-pointer hover:opacity-80 transition inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700';
       pill.innerHTML = `
         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span>Supabase Cloud (Đồng bộ)</span>
+        <span>Supabase Cloud (Đồng bộ) ⚙️</span>
       `;
-      pill.title = data.description + ` (${data.url})`;
+      pill.title = data.description + ' - Nhấp để xem/cấu hình Cloud Database';
     } else {
-      pill.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-zinc-800 dark:text-amber-300 border border-amber-300 dark:border-zinc-700';
+      pill.className = 'cursor-pointer hover:opacity-80 transition inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-zinc-800 dark:text-amber-300 border border-amber-300 dark:border-zinc-700';
       pill.innerHTML = `
         <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-        <span>SQLite Nội bộ</span>
+        <span>SQLite Nội bộ ⚙️</span>
       `;
-      pill.title = data.description + ' - Điền SUPABASE_URL trong .env để đồng bộ đa máy';
+      pill.title = 'Đang lưu tạm trên máy tính. Nhấp vào đây để kết nối Cloud Database!';
     }
   } catch (e) {
     console.warn('Could not check db status:', e);
+  }
+}
+
+function openDbConfigModal() {
+  let modal = document.getElementById('dbConfigModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'dbConfigModal';
+    modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs';
+    modal.innerHTML = `
+      <div class="bg-white dark:bg-zinc-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-gray-200 dark:border-zinc-800 space-y-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-zinc-800">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">☁️</span>
+            <h3 class="font-bold text-gray-900 dark:text-white text-base">Cấu Hình Cloud Database (Supabase)</h3>
+          </div>
+          <button onclick="closeDbConfigModal()" class="w-7 h-7 rounded-full bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 text-gray-500 dark:text-gray-400 flex items-center justify-center text-sm transition">✕</button>
+        </div>
+
+        <div id="dbModalStatusBanner" class="p-3.5 rounded-xl text-xs leading-relaxed">
+          Đang kiểm tra trạng thái database...
+        </div>
+
+        <form id="dbConfigForm" onsubmit="handleDbConfigSubmit(event)" class="space-y-3.5 text-xs">
+          <div>
+            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+              Supabase Project URL <span class="text-red-500">*</span>
+            </label>
+            <input 
+              type="url" 
+              id="cfgSupabaseUrl" 
+              placeholder="https://xxxxxxxxxxxx.supabase.co" 
+              class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-gray-900 dark:text-white focus:outline-none focus:border-amber-700 font-mono text-xs" 
+              required
+            />
+            <p class="text-[10px] text-gray-400 mt-1">Lấy tại: Supabase Dashboard &rarr; Project Settings &rarr; API &rarr; Project URL</p>
+          </div>
+
+          <div>
+            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-1">
+              Supabase API Key (anon public key hoặc service_role key) <span class="text-red-500">*</span>
+            </label>
+            <input 
+              type="text" 
+              id="cfgSupabaseKey" 
+              placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." 
+              class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-gray-900 dark:text-white focus:outline-none focus:border-amber-700 font-mono text-xs" 
+              required
+            />
+            <p class="text-[10px] text-gray-400 mt-1">Lấy tại: Supabase Dashboard &rarr; Project Settings &rarr; API &rarr; Project API keys</p>
+          </div>
+
+          <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300 cursor-pointer pt-1">
+            <input type="checkbox" id="cfgAutoSync" checked class="rounded text-amber-700 focus:ring-amber-600" />
+            <span class="font-medium text-xs">Tự động đồng bộ toàn bộ danh mục, sản phẩm và đơn hàng từ máy tính lên Cloud ngay sau khi kết nối</span>
+          </label>
+
+          <div class="flex gap-2 pt-2">
+            <button 
+              type="submit" 
+              id="btnSaveDbConfig" 
+              class="flex-1 py-2.5 px-4 rounded-xl bg-amber-800 hover:bg-amber-900 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2"
+            >
+              <span>🚀 Kết Nối & Chuyển Sang Cloud</span>
+            </button>
+            <button 
+              type="button" 
+              onclick="handleManualSync()" 
+              id="btnManualSync" 
+              class="py-2.5 px-3 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 font-semibold text-xs transition"
+              title="Đẩy dữ liệu từ máy lên Cloud"
+            >
+              🔄 Đồng Bộ Dữ Liệu
+            </button>
+          </div>
+        </form>
+
+        <div class="p-3 bg-amber-50/70 dark:bg-zinc-800/60 rounded-xl border border-amber-200/50 dark:border-zinc-700/60 text-[11px] space-y-1.5 text-gray-600 dark:text-gray-400">
+          <div class="font-bold text-amber-900 dark:text-amber-300">📖 3 Bước kết nối Supabase Cloud miễn phí:</div>
+          <div>1. Truy cập <strong>supabase.com</strong> tạo tài khoản & Project mới (miễn phí).</div>
+          <div>2. Vào menu <strong>SQL Editor</strong> &rarr; Dán nội dung file <code class="bg-white dark:bg-zinc-900 px-1 py-0.5 rounded border border-amber-300/50">supabase_schema.sql</code> &rarr; Nhấn <strong>Run</strong>.</div>
+          <div>3. Copy <strong>Project URL</strong> và <strong>anon key</strong> dán vào ô trên và lưu lại.</div>
+          <div class="text-[10px] text-amber-800 dark:text-amber-400 pt-0.5">💡 Nếu triển khai Vercel: Thêm 2 biến này vào <em>Vercel &rarr; Settings &rarr; Environment Variables</em> để Vercel không bao giờ bị mất dữ liệu!</div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  modal.classList.remove('hidden');
+  updateDbModalBanner();
+}
+
+function closeDbConfigModal() {
+  const modal = document.getElementById('dbConfigModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function updateDbModalBanner() {
+  const banner = document.getElementById('dbModalStatusBanner');
+  if (!banner) return;
+  try {
+    const res = await fetch('/api/db-status');
+    const data = await res.json();
+    if (data.mode === 'supabase') {
+      banner.className = 'p-3.5 rounded-xl text-xs leading-relaxed bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300';
+      banner.innerHTML = `
+        <div class="font-bold flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          Đang kết nối Supabase Cloud PostgreSQL
+        </div>
+        <div class="mt-1 text-[11px] opacity-90">Dữ liệu được lưu vĩnh viễn trên đám mây, an toàn tuyệt đối và đồng bộ trên mọi thiết bị. URL: <span class="font-mono">${data.url}</span></div>
+      `;
+    } else {
+      banner.className = 'p-3.5 rounded-xl text-xs leading-relaxed bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300';
+      banner.innerHTML = `
+        <div class="font-bold flex items-center gap-1.5">
+          <span>⚠️</span>
+          Đang lưu trữ nội bộ (SQLite file moho_store.db)
+        </div>
+        <div class="mt-1 text-[11px] opacity-90">Dữ liệu chỉ lưu tạm trên máy này và sẽ bị reset trên Vercel. Hãy nhập thông tin Supabase dưới đây để chuyển sang lưu trữ đám mây.</div>
+      `;
+    }
+  } catch (e) {
+    banner.innerText = 'Chưa kiểm tra được trạng thái database';
+  }
+}
+
+async function handleDbConfigSubmit(e) {
+  e.preventDefault();
+  const url = document.getElementById('cfgSupabaseUrl').value.trim();
+  const key = document.getElementById('cfgSupabaseKey').value.trim();
+  const autoSync = document.getElementById('cfgAutoSync').checked;
+  const btn = document.getElementById('btnSaveDbConfig');
+
+  if (!url || !key) {
+    showToast('Vui lòng điền đủ URL và API Key!', 'error');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = `<span>⏳ Đang kiểm tra & kết nối...</span>`;
+
+  try {
+    const res = await fetch('/api/admin/db-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        supabase_url: url,
+        supabase_key: key,
+        auto_sync: autoSync
+      })
+    });
+
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast('🎉 Kết nối Supabase Cloud thành công!', 'success');
+      loadDbStatus();
+      updateDbModalBanner();
+      setTimeout(() => {
+        closeDbConfigModal();
+        location.reload();
+      }, 1500);
+    } else {
+      showToast(data.error || 'Kết nối Supabase thất bại. Vui lòng kiểm tra lại URL hoặc Key!', 'error');
+    }
+  } catch (err) {
+    showToast('Lỗi gửi yêu cầu kết nối: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span>🚀 Kết Nối & Chuyển Sang Cloud</span>`;
+  }
+}
+
+async function handleManualSync() {
+  const btn = document.getElementById('btnManualSync');
+  btn.disabled = true;
+  btn.innerText = '⏳ Đang đồng bộ...';
+  try {
+    const res = await fetch('/api/admin/db-sync', { method: 'POST' });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      const s = data.stats || {};
+      showToast(`✅ Đã đồng bộ lên Cloud: ${s.categories || 0} danh mục, ${s.products || 0} sản phẩm, ${s.orders || 0} đơn hàng!`, 'success');
+    } else {
+      showToast(data.error || 'Đồng bộ thất bại', 'error');
+    }
+  } catch (e) {
+    showToast('Lỗi đồng bộ: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerText = '🔄 Đồng Bộ Dữ Liệu';
   }
 }
 

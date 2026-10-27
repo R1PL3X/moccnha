@@ -306,6 +306,29 @@ class MohoStoreTestCase(unittest.TestCase):
         del_session_res = self.client.delete(f'/api/admin/chat/sessions/{session_id}')
         self.assertEqual(del_session_res.status_code, 200)
 
+    def test_db_config_endpoints(self):
+        # 1. Check DB status endpoint returns current mode
+        res = self.client.get('/api/db-status')
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.data)
+        self.assertIn('mode', data)
+
+        # 2. Validation for empty credentials
+        config_res = self.client.post(
+            '/api/admin/db-config',
+            data=json.dumps({'supabase_url': '', 'supabase_key': ''}),
+            content_type='application/json'
+        )
+        self.assertEqual(config_res.status_code, 400)
+
+        # 3. Validation for invalid credentials
+        invalid_res = self.client.post(
+            '/api/admin/db-config',
+            data=json.dumps({'supabase_url': 'http://invalid-url.fake', 'supabase_key': 'invalid-key'}),
+            content_type='application/json'
+        )
+        self.assertEqual(invalid_res.status_code, 400)
+
 if __name__ == '__main__':
     unittest.main()
 

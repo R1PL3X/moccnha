@@ -53,6 +53,149 @@ def init_supabase():
 # Attempt initial connection
 init_supabase()
 
+def test_and_configure_supabase(url, key):
+    """Test connection to Supabase with given credentials and set as active DB if valid"""
+    global supabase_client, _using_supabase, SUPABASE_URL, SUPABASE_KEY
+    url = (url or '').strip()
+    key = (key or '').strip()
+    if not url or not key or not url.startswith('http'):
+        return False, "URL hoặc API Key không hợp lệ. URL phải bắt đầu bằng https://"
+    try:
+        from supabase import create_client
+        client = create_client(url, key)
+        # Test query to verify tables exist
+        client.table('categories').select('id').limit(1).execute()
+        SUPABASE_URL = url
+        SUPABASE_KEY = key
+        supabase_client = client
+        _using_supabase = True
+        print(f"[DB ADAPTER] -> Successfully switched to Supabase Cloud Database: {url}")
+        return True, "Kết nối Supabase Cloud thành công!"
+    except Exception as e:
+        return False, f"Lỗi kết nối Supabase: {str(e)}"
+
+def sync_local_to_supabase():
+    """Sync categories, products, users, orders, and quotes from local SQLite to Supabase Cloud"""
+    if not is_supabase_enabled():
+        return False, "Chưa kết nối Supabase Cloud"
+    
+    from database import get_db_connection
+    conn = get_db_connection()
+    stats = {'categories': 0, 'products': 0, 'users': 0, 'orders': 0, 'quotes': 0}
+    errors = []
+    
+    # 1. Categories
+    try:
+        cats = conn.execute('SELECT * FROM categories').fetchall()
+        for c in cats:
+            supabase_client.table('categories').upsert({
+                'name': c['name'],
+                'slug': c['slug'],
+                'icon': c['icon']
+            }, on_conflict='name').execute()
+            stats['categories'] += 1
+    except Exception as e:
+        errors.append(f"Categories: {e}")
+
+    # 2. Products
+    try:
+        prods = conn.execute('SELECT * FROM products').fetchall()
+        for p in prods:
+            d = dict(p)
+            payload = {
+                'title': d['title'],
+                'full_title': d.get('full_title') or d['title'],
+                'category': d['category'],
+                'collection': d.get('collection') or 'MOHO',
+                'price': d['price'],
+                'original_price': d.get('original_price', d['price']),
+                'discount_percent': d.get('discount_percent', 0),
+                'rating': d.get('rating', 5.0),
+                'review_count': d.get('review_count', 0),
+                'sold_count': d.get('sold_count', 0),
+                'image': d.get('image', ''),
+                'detail_image': d.get('detail_image', ''),
+                'gallery': normalize_json_field(d.get('gallery')),
+                'colors': normalize_json_field(d.get('colors')),
+                'highlights': normalize_json_field(d.get('highlights')),
+                'is_bestseller': d.get('is_bestseller', 0),
+                'is_promo': d.get('is_promo', 0),
+                'description': d.get('description', ''),
+                'material': d.get('material', 'Gỗ tự nhiên'),
+                'dimensions': d.get('dimensions', 'Tiêu chuẩn')
+            }
+            existing = supabase_client.table('products').select('id').eq('title', payload['title']).execute()
+            if existing.data and len(existing.data) > 0:
+                supabase_client.table('products').update(payload).eq('title', payload['title']).execute()
+            else:
+                supabase_client.table('products').insert(payload).execute()
+            stats['products'] += 1
+    except Exception as e:
+        errors.append(f"Products: {e}")
+
+    # 3. Users
+    try:
+        users = conn.execute('SELECT * FROM users').fetchall()
+        for u in users:
+            ud = dict(u)
+            supabase_client.table('users').upsert({
+                'fullname': ud['fullname'],
+                'email': ud['email'],
+                'phone': ud.get('phone', ''),
+                'password': ud['password'],
+                'role': ud.get('role', 'customer')
+            }, on_conflict='email').execute()
+            stats['users'] += 1
+    except Exception as e:
+        errors.append(f"Users: {e}")
+
+    # 4. Orders
+    try:
+        orders = conn.execute('SELECT * FROM orders').fetchall()
+        for o in orders:
+            od = dict(o)
+            order_payload = {
+                'order_code': od['order_code'],
+                'customer_name': od['customer_name'],
+                'customer_phone': od['customer_phone'],
+                'customer_email': od.get('customer_email', ''),
+                'customer_address': od['customer_address'],
+                'payment_method': od.get('payment_method', 'COD'),
+                'note': od.get('note', ''),
+                'items': normalize_json_field(od.get('items')),
+                'total_amount': od['total_amount'],
+                'status': od.get('status', 'pending')
+            }
+            existing = supabase_client.table('orders').select('id').eq('order_code', od['order_code']).execute()
+            if existing.data and len(existing.data) > 0:
+                supabase_client.table('orders').update(order_payload).eq('order_code', od['order_code']).execute()
+            else:
+                supabase_client.table('orders').insert(order_payload).execute()
+            stats['orders'] += 1
+    except Exception as e:
+        errors.append(f"Orders: {e}")
+
+    # 5. Quotes
+    try:
+        quotes = conn.execute('SELECT * FROM quotes').fetchall()
+        for q in quotes:
+            qd = dict(q)
+            quote_payload = {
+                'fullname': qd['fullname'],
+                'phone': qd['phone'],
+                'email': qd.get('email', ''),
+                'project_type': qd.get('project_type', ''),
+                'note': qd.get('note', ''),
+                'status': qd.get('status', 'pending')
+            }
+            supabase_client.table('quotes').insert(quote_payload).execute()
+            stats['quotes'] += 1
+    except Exception as e:
+        errors.append(f"Quotes: {e}")
+
+    conn.close()
+    return True, stats
+
 def is_supabase_enabled():
     """Return whether the application is currently connected to Supabase Cloud"""
     return _using_supabase and supabase_client is not None

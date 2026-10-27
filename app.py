@@ -133,11 +133,86 @@ def not_found(e):
     return jsonify({'error': '404 Không tìm thấy trang yêu cầu'}), 404
 
 
-# --- DATABASE STATUS ENDPOINT ---
+# --- DATABASE STATUS & CONFIG ENDPOINTS ---
 @app.route('/api/db-status', methods=['GET'])
 def get_db_status():
     """Returns whether the system is connected to Supabase Cloud or Local SQLite"""
     return jsonify(db_adapter.get_db_info())
+
+@app.route('/api/admin/db-config', methods=['POST'])
+def save_db_config():
+    """Configure and switch to Supabase Cloud Database dynamically"""
+    data = request.get_json() or {}
+    url = (data.get('supabase_url') or '').strip()
+    key = (data.get('supabase_key') or '').strip()
+    auto_sync = data.get('auto_sync', True)
+
+    if not url or not key:
+        return jsonify({'success': False, 'error': 'Vui lòng điền cả SUPABASE_URL và SUPABASE_KEY!'}), 400
+
+    ok, msg = db_adapter.test_and_configure_supabase(url, key)
+    if not ok:
+        return jsonify({'success': False, 'error': msg}), 400
+
+    # Write to .env file in project directory
+    env_path = os.path.join(ROOT_DIR, '.env')
+    try:
+        lines = []
+        if os.path.exists(env_path):
+            with open(env_path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+
+        url_found = False
+        key_found = False
+        new_lines = []
+        for line in lines:
+            if line.startswith('SUPABASE_URL='):
+                new_lines.append(f'SUPABASE_URL={url}\n')
+                url_found = True
+            elif line.startswith('SUPABASE_KEY='):
+                new_lines.append(f'SUPABASE_KEY={key}\n')
+                key_found = True
+            else:
+                new_lines.append(line)
+        if not url_found:
+            new_lines.append(f'SUPABASE_URL={url}\n')
+        if not key_found:
+            new_lines.append(f'SUPABASE_KEY={key}\n')
+
+        with open(env_path, 'w', encoding='utf-8') as f:
+            f.writelines(new_lines)
+    except Exception as e:
+        logger.warning(f"Could not write .env file: {e}")
+
+    # Update in environment variables
+    os.environ['SUPABASE_URL'] = url
+    os.environ['SUPABASE_KEY'] = key
+
+    sync_result = None
+    if auto_sync:
+        try:
+            _, sync_result = db_adapter.sync_local_to_supabase()
+        except Exception as e:
+            sync_result = f"Lỗi đồng bộ tự động: {e}"
+
+    return jsonify({
+        'success': True,
+        'message': 'Đã kết nối Supabase Cloud Database thành công!',
+        'db_info': db_adapter.get_db_info(),
+        'sync_stats': sync_result
+    })
+
+@app.route('/api/admin/db-sync', methods=['POST'])
+def trigger_db_sync():
+    """Trigger manual data synchronization from local SQLite to Supabase Cloud"""
+    ok, result = db_adapter.sync_local_to_supabase()
+    if not ok:
+        return jsonify({'success': False, 'error': result}), 400
+    return jsonify({
+        'success': True,
+        'message': 'Đồng bộ dữ liệu lên Supabase Cloud thành công!',
+        'stats': result
+    })
 
 # --- API ENDPOINTS ---
 
