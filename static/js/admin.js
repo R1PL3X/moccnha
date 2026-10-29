@@ -450,6 +450,165 @@ async function quickEditSoldCount(productId, currentCount) {
   }
 }
 
+// ==============================================================================
+// PRODUCT IMAGE UPLOAD & OPTIMIZATION (CLIENT CANVAS COMPRESSION)
+// ==============================================================================
+
+function switchProductImageSource(type) {
+  const uploadBox = document.getElementById('productUploadBox');
+  const urlBox = document.getElementById('productUrlBox');
+  const uploadBtn = document.getElementById('imgSrcUploadBtn');
+  const urlBtn = document.getElementById('imgSrcUrlBtn');
+
+  if (type === 'upload') {
+    uploadBox?.classList.remove('hidden');
+    urlBox?.classList.add('hidden');
+    uploadBtn?.classList.add('font-bold', 'bg-white', 'dark:bg-zinc-700', 'text-amber-800', 'dark:text-amber-300', 'shadow-xs');
+    uploadBtn?.classList.remove('text-gray-500');
+    urlBtn?.classList.remove('font-bold', 'bg-white', 'dark:bg-zinc-700', 'text-amber-800', 'dark:text-amber-300', 'shadow-xs');
+    urlBtn?.classList.add('text-gray-500');
+  } else {
+    uploadBox?.classList.add('hidden');
+    urlBox?.classList.remove('hidden');
+    urlBtn?.classList.add('font-bold', 'bg-white', 'dark:bg-zinc-700', 'text-amber-800', 'dark:text-amber-300', 'shadow-xs');
+    urlBtn?.classList.remove('text-gray-500');
+    uploadBtn?.classList.remove('font-bold', 'bg-white', 'dark:bg-zinc-700', 'text-amber-800', 'dark:text-amber-300', 'shadow-xs');
+    uploadBtn?.classList.add('text-gray-500');
+  }
+}
+
+function handleProductUrlChange(val) {
+  const hiddenInput = document.getElementById('productFinalImage');
+  if (hiddenInput) hiddenInput.value = (val || '').trim();
+}
+
+/**
+ * Nén ảnh tự động bằng HTML5 Canvas:
+ * Giới hạn kích thước tối đa 1200x1200px, chất lượng 0.85
+ * Biến ảnh nặng 5-10MB thành ~100-200KB siêu nét, tải cực nhanh
+ */
+function compressImageFile(file, maxWidth = 1200, quality = 0.85) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > maxWidth || height > maxWidth) {
+          if (width > height) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxWidth) / height);
+            height = maxWidth;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve({ dataUrl, width, height });
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadImageToServer(file, compressedDataUrl) {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    if (res.ok && data.success && data.url) {
+      return data.url;
+    }
+  } catch (err) {
+    console.warn('Server upload fallback to data URL:', err);
+  }
+  return compressedDataUrl;
+}
+
+async function handleProductFileSelect(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  const promptEl = document.getElementById('productUploadPrompt');
+  const previewBox = document.getElementById('productPreviewBox');
+  const previewImg = document.getElementById('productPreviewImg');
+  const previewName = document.getElementById('productPreviewName');
+  const previewSize = document.getElementById('productPreviewSize');
+  const finalInput = document.getElementById('productFinalImage');
+
+  if (previewSize) previewSize.textContent = 'Đang xử lý & tối ưu ảnh...';
+  if (promptEl) promptEl.classList.add('hidden');
+  if (previewBox) previewBox.classList.remove('hidden');
+
+  try {
+    const { dataUrl, width, height } = await compressImageFile(file);
+    if (previewImg) previewImg.src = dataUrl;
+    if (previewName) previewName.textContent = file.name;
+    if (previewSize) {
+      const sizeKb = Math.round((dataUrl.length * 3 / 4) / 1024);
+      previewSize.textContent = `Đã tối ưu (${width}x${height}px • ~${sizeKb} KB)`;
+    }
+    if (finalInput) finalInput.value = dataUrl;
+
+    // Gửi lên server hoặc lưu Data URL
+    const finalUrl = await uploadImageToServer(file, dataUrl);
+    if (finalInput) finalInput.value = finalUrl;
+  } catch (err) {
+    console.error('Image compression error:', err);
+    showAdminToast('Không thể xử lý file ảnh. Vui lòng chọn ảnh khác.', 'error');
+    clearProductImageUpload();
+  }
+}
+
+function clearProductImageUpload() {
+  const fileInput = document.getElementById('productFileInput');
+  if (fileInput) fileInput.value = '';
+  const finalInput = document.getElementById('productFinalImage');
+  if (finalInput) finalInput.value = '';
+  const promptEl = document.getElementById('productUploadPrompt');
+  const previewBox = document.getElementById('productPreviewBox');
+  const previewImg = document.getElementById('productPreviewImg');
+  if (promptEl) promptEl.classList.remove('hidden');
+  if (previewBox) previewBox.classList.add('hidden');
+  if (previewImg) previewImg.src = '';
+}
+
+async function handleEditProductFileSelect(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  const editImg = document.getElementById('editImage');
+  const previewImg = document.getElementById('editImagePreview');
+
+  try {
+    showAdminToast('Đang nén & tải ảnh lên...', 'info');
+    const { dataUrl } = await compressImageFile(file);
+    if (previewImg) previewImg.src = dataUrl;
+    if (editImg) editImg.value = dataUrl;
+
+    const finalUrl = await uploadImageToServer(file, dataUrl);
+    if (editImg) editImg.value = finalUrl;
+    if (previewImg) previewImg.src = finalUrl;
+    showAdminToast('Đã chọn ảnh thành công!', 'success');
+  } catch (err) {
+    console.error(err);
+    showAdminToast('Lỗi khi tải ảnh', 'error');
+  }
+}
+
 function openEditProductModal(productId) {
   const product = ALL_ADMIN_PRODUCTS.find(p => p.id === productId);
   if (!product) return;
@@ -462,6 +621,10 @@ function openEditProductModal(productId) {
   document.getElementById('editDiscountPercent').value = product.discount_percent || 0;
   document.getElementById('editSoldCount').value = product.sold_count || 0;
   document.getElementById('editImage').value = product.image || '';
+  const editPreview = document.getElementById('editImagePreview');
+  if (editPreview) editPreview.src = product.image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800';
+  const editFileInput = document.getElementById('editFileInput');
+  if (editFileInput) editFileInput.value = '';
   document.getElementById('editDescription').value = product.description || '';
   document.getElementById('editProductModal')?.classList.remove('hidden');
 }
@@ -523,6 +686,7 @@ async function syncAdminSoldCounts() {
 async function handleCreateProduct(e) {
   e.preventDefault();
   const form = e.target;
+  const imageVal = (document.getElementById('productFinalImage')?.value || form.image?.value || '').trim();
   const payload = {
     title: form.title.value.trim(),
     category: form.category.value,
@@ -530,7 +694,7 @@ async function handleCreateProduct(e) {
     original_price: parseInt(form.original_price.value) || parseInt(form.price.value),
     discount_percent: parseInt(form.discount_percent.value) || 0,
     sold_count: parseInt(form.sold_count?.value) || 0,
-    image: form.image.value.trim() || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800',
+    image: imageVal || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800',
     collection: form.collection.value.trim() || 'MOHO',
     description: form.description.value.trim(),
     is_bestseller: 1
@@ -546,6 +710,7 @@ async function handleCreateProduct(e) {
     if (res.ok && result.success) {
       showAdminToast('Đã thêm sản phẩm mới thành công!', 'success');
       form.reset();
+      clearProductImageUpload();
       loadAdminProducts();
       loadAdminStats();
     } else {

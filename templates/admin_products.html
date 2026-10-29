@@ -205,9 +205,63 @@
             <input name="collection" type="text" placeholder="VLINE, HOBRO, MILAN" class="w-full px-3 py-2 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-white focus:outline-none focus:border-amber-700" />
           </div>
 
-          <div class="sm:col-span-3">
-            <label class="block text-xs font-semibold mb-1">Link Ảnh Sản Phẩm (URL)</label>
-            <input name="image" type="url" placeholder="https://images.unsplash.com/photo-..." class="w-full px-3 py-2 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-white focus:outline-none focus:border-amber-700" />
+          <div class="sm:col-span-3 space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-semibold">Hình ảnh sản phẩm *</label>
+              <div class="flex items-center gap-1.5 bg-gray-100 dark:bg-zinc-800 p-0.5 rounded-lg text-[11px]">
+                <button type="button" onclick="switchProductImageSource('upload')" id="imgSrcUploadBtn" class="px-2.5 py-1 rounded-md font-bold bg-white dark:bg-zinc-700 text-amber-800 dark:text-amber-300 shadow-xs transition">
+                  📁 Tải từ máy tính
+                </button>
+                <button type="button" onclick="switchProductImageSource('url')" id="imgSrcUrlBtn" class="px-2.5 py-1 rounded-md text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition">
+                  🔗 Nhập Link URL
+                </button>
+              </div>
+            </div>
+
+            <!-- Hidden actual input holding final URL or Base64 -->
+            <input type="hidden" name="image" id="productFinalImage" />
+
+            <!-- Option 1: Upload from Computer/Device -->
+            <div id="productUploadBox" class="border-2 border-dashed border-gray-300 dark:border-zinc-700 hover:border-amber-600 dark:hover:border-amber-500 rounded-xl p-4 transition bg-gray-50/50 dark:bg-zinc-800/40 text-center relative">
+              <input type="file" id="productFileInput" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="handleProductFileSelect(event)" />
+              
+              <div id="productUploadPrompt" class="py-3 pointer-events-none">
+                <div class="text-3xl mb-1">📸</div>
+                <div class="text-xs font-bold text-gray-800 dark:text-zinc-200">
+                  Bấm vào đây để chọn ảnh từ máy tính / điện thoại
+                </div>
+                <div class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                  Hỗ trợ JPG, PNG, WEBP (tự động tối ưu hóa hiển thị nhanh & sắc nét)
+                </div>
+              </div>
+
+              <!-- Preview Box when an image is chosen -->
+              <div id="productPreviewBox" class="hidden flex items-center justify-between gap-3 p-2 bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-700 relative z-20">
+                <div class="flex items-center gap-3 min-w-0">
+                  <img id="productPreviewImg" src="" alt="Xem trước" class="w-14 h-14 object-cover rounded-lg border border-gray-200 dark:border-zinc-700 flex-shrink-0 bg-gray-100 dark:bg-zinc-800" />
+                  <div class="text-left min-w-0">
+                    <div id="productPreviewName" class="text-xs font-bold text-gray-900 dark:text-white truncate">tên_file.jpg</div>
+                    <div id="productPreviewSize" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">Đã sẵn sàng tải lên</div>
+                    <div class="text-[10px] text-gray-400">Ảnh đã được nén tối ưu hiển thị web</div>
+                  </div>
+                </div>
+                <button type="button" onclick="clearProductImageUpload()" class="px-2.5 py-1 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg border border-red-200 dark:border-red-900/60 font-semibold transition flex-shrink-0">
+                  ✕ Đổi ảnh
+                </button>
+              </div>
+            </div>
+
+            <!-- Option 2: Enter Image URL -->
+            <div id="productUrlBox" class="hidden">
+              <input 
+                id="productUrlInput" 
+                type="url" 
+                placeholder="https://images.unsplash.com/photo-... hoặc link ảnh trực tiếp" 
+                class="w-full px-3 py-2 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-white focus:outline-none focus:border-amber-700" 
+                oninput="handleProductUrlChange(this.value)"
+              />
+              <p class="text-[10px] text-gray-400 mt-1">Dán liên kết ảnh trực tiếp từ Unsplash, Imgur, hoặc CDN</p>
+            </div>
           </div>
 
           <div class="sm:col-span-3">
@@ -316,9 +370,21 @@
             <label class="block font-semibold mb-1 text-amber-700 dark:text-amber-400">Số lượng đã bán (Đã bán) *</label>
             <input id="editSoldCount" name="sold_count" required type="number" min="0" class="w-full px-3 py-2 rounded border-2 border-amber-500/60 dark:border-amber-500/60 bg-amber-50/30 dark:bg-amber-950/30 text-gray-900 dark:text-white font-bold focus:outline-none focus:border-amber-700" />
           </div>
-          <div class="sm:col-span-2">
-            <label class="block font-semibold mb-1">Link Ảnh Sản Phẩm (URL)</label>
-            <input id="editImage" name="image" type="url" class="w-full px-3 py-2 rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-white focus:outline-none focus:border-amber-700" />
+          <div class="sm:col-span-2 space-y-2">
+            <label class="block font-semibold">Hình ảnh sản phẩm *</label>
+            <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-zinc-800/60 rounded-xl border border-gray-200 dark:border-zinc-700">
+              <img id="editImagePreview" src="" alt="Ảnh sản phẩm" class="w-16 h-16 object-cover rounded-lg border border-gray-200 dark:border-zinc-700 flex-shrink-0 bg-white dark:bg-zinc-900" />
+              <div class="flex-1 min-w-0 space-y-2">
+                <div class="flex items-center gap-2">
+                  <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-800 hover:bg-amber-900 text-white font-semibold text-xs shadow-xs transition">
+                    <span>📸 Tải ảnh mới từ máy</span>
+                    <input type="file" id="editFileInput" accept="image/*" class="hidden" onchange="handleEditProductFileSelect(event)" />
+                  </label>
+                  <span class="text-[11px] text-gray-400">hoặc sửa URL bên dưới</span>
+                </div>
+                <input id="editImage" name="image" type="text" placeholder="https://... hoặc data:image/..." class="w-full px-2.5 py-1.5 text-xs rounded border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-white focus:outline-none focus:border-amber-700" oninput="document.getElementById('editImagePreview').src = this.value" />
+              </div>
+            </div>
           </div>
           <div class="sm:col-span-2">
             <label class="block font-semibold mb-1">Mô tả sản phẩm</label>
@@ -337,6 +403,6 @@
     </div>
   </div>
 
-  <script src="/static/js/admin.js?v=13"></script>
+  <script src="/static/js/admin.js?v=14"></script>
 </body>
 </html>

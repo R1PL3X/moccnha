@@ -341,6 +341,77 @@ def sync_sold_endpoint():
     except Exception as e:
         return jsonify({'error': f'Lỗi khi đồng bộ: {str(e)}'}), 500
 
+@app.route('/api/upload', methods=['POST'])
+def upload_file():
+    """
+    Endpoint upload ảnh từ máy tính hoặc điện thoại lên web.
+    Hỗ trợ multipart/form-data hoặc JSON base64.
+    """
+    try:
+        # 1. Nhận file multipart
+        if 'file' in request.files:
+            file = request.files['file']
+            if file and file.filename:
+                filename = file.filename
+                ext = os.path.splitext(filename)[1].lower()
+                if ext not in ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg']:
+                    return jsonify({'error': 'Định dạng file không hợp lệ. Vui lòng chọn JPG, PNG, WEBP.'}), 400
+
+                content = file.read()
+                if len(content) > 10 * 1024 * 1024:
+                    return jsonify({'error': 'Kích thước file ảnh vượt quá 10MB.'}), 400
+
+                # Thử upload lên Supabase Storage nếu đang dùng Supabase
+                if db_adapter.is_supabase_enabled() and db_adapter.supabase_client:
+                    try:
+                        import time
+                        bucket_name = 'product-images'
+                        safe_name = f"prod_{int(time.time())}_{random.randint(1000, 9999)}{ext}"
+                        content_type = file.content_type or 'image/jpeg'
+                        db_adapter.supabase_client.storage.from_(bucket_name).upload(
+                            safe_name, content, {"content-type": content_type}
+                        )
+                        public_url = db_adapter.supabase_client.storage.from_(bucket_name).get_public_url(safe_name)
+                        return jsonify({'success': True, 'url': public_url})
+                    except Exception as s_err:
+                        logger.warning(f"Supabase storage upload failed: {s_err}")
+
+                # Lưu vào thư mục uploads cục bộ nếu có thể ghi đĩa
+                try:
+                    import time
+                    safe_name = f"prod_{int(time.time())}_{random.randint(1000, 9999)}{ext}"
+                    upload_dir = os.path.join(BASE_DIR, 'static', 'uploads')
+                    os.makedirs(upload_dir, exist_ok=True)
+                    file_path = os.path.join(upload_dir, safe_name)
+                    with open(file_path, 'wb') as f:
+                        f.write(content)
+
+                    # Đồng bộ sang public/static/uploads nếu có thư mục public
+                    if os.path.exists(os.path.join(BASE_DIR, 'public')):
+                        pub_dir = os.path.join(BASE_DIR, 'public', 'static', 'uploads')
+                        os.makedirs(pub_dir, exist_ok=True)
+                        with open(os.path.join(pub_dir, safe_name), 'wb') as pf:
+                            pf.write(content)
+
+                    return jsonify({'success': True, 'url': f'/static/uploads/{safe_name}'})
+                except Exception:
+                    # Trên serverless Vercel read-only filesystem, fallback sang data URI base64
+                    import base64
+                    mime = file.content_type or 'image/jpeg'
+                    b64_str = base64.b64encode(content).decode('utf-8')
+                    return jsonify({'success': True, 'url': f'data:{mime};base64,{b64_str}'})
+
+        # 2. Nhận JSON base64
+        data = request.get_json(silent=True) or {}
+        image_data = data.get('image')
+        if image_data and image_data.startswith('data:image'):
+            return jsonify({'success': True, 'url': image_data})
+
+        return jsonify({'error': 'Không tìm thấy file ảnh hợp lệ'}), 400
+    except Exception as e:
+        logger.error(f"Upload error: {e}")
+        return jsonify({'error': f'Lỗi khi tải ảnh: {str(e)}'}), 500
+
 @app.route('/api/orders', methods=['POST'])
 def create_order():
     data = request.get_json() or {}
