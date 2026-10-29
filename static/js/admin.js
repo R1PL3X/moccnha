@@ -585,33 +585,48 @@ const showToast = showAdminToast;
 
 async function loadDbStatus() {
   const pill = document.getElementById('db-status-pill');
-  if (!pill) return;
-
-  pill.classList.add('cursor-pointer', 'hover:opacity-80', 'transition');
-  pill.onclick = () => openDbConfigModal('db');
+  const banner = document.getElementById('sqlite-warning-banner');
+  if (pill) {
+    pill.classList.remove('hidden');
+    pill.classList.add('cursor-pointer', 'hover:opacity-80', 'transition');
+    pill.onclick = () => openDbConfigModal('db');
+  }
 
   try {
     const res = await fetch('/api/db-status');
     const data = await res.json();
-    pill.classList.remove('hidden');
+    if (pill) pill.classList.remove('hidden');
 
     if (data.mode === 'supabase') {
-      pill.className = 'cursor-pointer hover:opacity-80 transition inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700';
-      pill.innerHTML = `
-        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span>Supabase Cloud (Đồng bộ) ⚙️</span>
-      `;
-      pill.title = data.description + ' - Nhấp để xem/cấu hình Cloud Database';
+      if (pill) {
+        pill.className = 'cursor-pointer hover:opacity-80 transition inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700';
+        pill.innerHTML = `
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>Supabase Cloud (Đồng bộ) ⚙️</span>
+        `;
+        pill.title = (data.description || 'Đang kết nối Supabase Cloud PostgreSQL') + ' - Nhấp để xem/cấu hình Cloud Database';
+      }
+      if (banner) banner.classList.add('hidden');
+      if (data.url) localStorage.setItem('mocnha_supabase_url', data.url);
     } else {
-      pill.className = 'cursor-pointer hover:opacity-80 transition inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-zinc-800 dark:text-amber-300 border border-amber-300 dark:border-zinc-700';
-      pill.innerHTML = `
-        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-        <span>SQLite Nội bộ ⚙️</span>
-      `;
-      pill.title = 'Đang lưu tạm trên máy tính. Nhấp vào đây để kết nối Cloud Database!';
+      if (pill) {
+        pill.className = 'cursor-pointer hover:opacity-80 transition inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-zinc-800 dark:text-amber-300 border border-amber-300 dark:border-zinc-700';
+        pill.innerHTML = `
+          <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+          <span>SQLite Nội bộ (Chưa đồng bộ) ⚙️</span>
+        `;
+        pill.title = 'Đang dùng SQLite nội bộ chỉ trên máy này. Nhấp vào đây để kết nối Supabase Cloud đồng bộ đa thiết bị!';
+      }
+      if (banner) banner.classList.remove('hidden');
     }
   } catch (e) {
     console.warn('Could not check db status:', e);
+    if (pill) {
+      pill.classList.remove('hidden');
+      pill.className = 'cursor-pointer hover:opacity-80 transition inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300';
+      pill.innerHTML = `<span>⚠️ Kiểm tra DB ⚙️</span>`;
+    }
+    if (banner) banner.classList.remove('hidden');
   }
 }
 
@@ -803,6 +818,13 @@ function openDbConfigModal(defaultTab = 'db') {
   }
 
   modal.classList.remove('hidden');
+  const savedUrl = localStorage.getItem('mocnha_supabase_url');
+  const savedKey = localStorage.getItem('mocnha_supabase_key');
+  const inputUrl = document.getElementById('cfgSupabaseUrl');
+  const inputKey = document.getElementById('cfgSupabaseKey');
+  if (inputUrl && !inputUrl.value && savedUrl) inputUrl.value = savedUrl;
+  if (inputKey && !inputKey.value && savedKey) inputKey.value = savedKey;
+
   switchModalTab(defaultTab);
   updateDbModalBanner();
   updateAiModalBanner();
@@ -924,6 +946,8 @@ async function handleDbConfigSubmit(e) {
 
     const data = await res.json();
     if (res.ok && data.success) {
+      localStorage.setItem('mocnha_supabase_url', url);
+      localStorage.setItem('mocnha_supabase_key', key);
       showToast('🎉 Kết nối Supabase Cloud thành công!', 'success');
       loadDbStatus();
       updateDbModalBanner();

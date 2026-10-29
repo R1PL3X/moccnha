@@ -17,24 +17,58 @@ from database import get_db_connection, init_db
 try:
     from dotenv import load_dotenv
     load_dotenv()
-except ImportError:
+except Exception:
     pass
 
 logger = logging.getLogger('moho.db_adapter')
 
-SUPABASE_URL = (os.environ.get('SUPABASE_URL') or os.environ.get('NEXT_PUBLIC_SUPABASE_URL') or '').strip()
-SUPABASE_KEY = (os.environ.get('SUPABASE_KEY') or os.environ.get('SUPABASE_ANON_KEY') or os.environ.get('SUPABASE_SERVICE_ROLE_KEY') or '').strip()
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+CONFIG_FILE = os.path.join(ROOT_DIR, 'db_config.json')
+
+def load_stored_config():
+    """Load persistent configuration from db_config.json so settings persist across machines"""
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            logger.warning(f"Error reading db_config.json: {e}")
+    return {}
+
+def save_stored_config(data):
+    """Save persistent configuration to db_config.json so it syncs across machines"""
+    try:
+        current = load_stored_config()
+        current.update(data)
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(current, f, indent=2, ensure_ascii=False)
+        return True
+    except Exception as e:
+        logger.warning(f"Could not save db_config.json: {e}")
+        return False
+
+_stored_cfg = load_stored_config()
+SUPABASE_URL = (os.environ.get('SUPABASE_URL') or os.environ.get('NEXT_PUBLIC_SUPABASE_URL') or _stored_cfg.get('supabase_url') or '').strip()
+SUPABASE_KEY = (os.environ.get('SUPABASE_KEY') or os.environ.get('SUPABASE_ANON_KEY') or os.environ.get('SUPABASE_SERVICE_ROLE_KEY') or _stored_cfg.get('supabase_key') or '').strip()
 
 supabase_client = None
 _using_supabase = False
 
 def init_supabase():
-    global supabase_client, _using_supabase
+    global supabase_client, _using_supabase, SUPABASE_URL, SUPABASE_KEY
+    cfg = load_stored_config()
+    if not SUPABASE_URL:
+        SUPABASE_URL = (os.environ.get('SUPABASE_URL') or os.environ.get('NEXT_PUBLIC_SUPABASE_URL') or cfg.get('supabase_url') or '').strip()
+    if not SUPABASE_KEY:
+        SUPABASE_KEY = (os.environ.get('SUPABASE_KEY') or os.environ.get('SUPABASE_ANON_KEY') or os.environ.get('SUPABASE_SERVICE_ROLE_KEY') or cfg.get('supabase_key') or '').strip()
+
     if SUPABASE_URL and SUPABASE_KEY and SUPABASE_URL.startswith('http'):
         try:
             from supabase import create_client
             supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
             _using_supabase = True
+            os.environ['SUPABASE_URL'] = SUPABASE_URL
+            os.environ['SUPABASE_KEY'] = SUPABASE_KEY
             print(f"[DB ADAPTER] -> Initialized Supabase client for: {SUPABASE_URL}")
             return True
         except Exception as e:
@@ -81,6 +115,9 @@ def test_and_configure_supabase(url, key):
         SUPABASE_KEY = key
         supabase_client = client
         _using_supabase = True
+        os.environ['SUPABASE_URL'] = url
+        os.environ['SUPABASE_KEY'] = key
+        save_stored_config({'supabase_url': url, 'supabase_key': key})
         print(f"[DB ADAPTER] -> Successfully switched to Supabase Cloud Database: {url}")
         auto_seed_supabase_if_empty()
         return True, "Kết nối Supabase Cloud thành công!"
@@ -274,18 +311,20 @@ def get_categories():
             cats_res = supabase_client.table('categories').select('*').order('id').execute()
             categories = cats_res.data or []
 
-            if categories:
-                # Fetch products to calculate product counts
+            # Fetch products to calculate product counts
+            try:
                 prod_res = supabase_client.table('products').select('category').execute()
                 counts = {}
                 for p in (prod_res.data or []):
                     cat_name = p.get('category')
                     counts[cat_name] = counts.get(cat_name, 0) + 1
-                    
+                
                 for c in categories:
                     c['product_count'] = counts.get(c.get('name'), 0)
-                    
-                return categories
+            except Exception:
+                pass
+                
+            return categories
         except Exception as e:
             logger.error(f"Supabase get_categories error: {e}")
             pass
@@ -335,9 +374,7 @@ def get_products(category=None, search=None, bestseller=None, promo=None, sort='
                 
             res = query.execute()
             data = res.data or []
-
-            if data:
-                return [format_product_dict(p) for p in data]
+            return [format_product_dict(p) for p in data]
         except Exception as e:
             logger.error(f"Supabase get_products error: {e}")
             pass
@@ -624,8 +661,7 @@ def get_orders():
         try:
             res = supabase_client.table('orders').select('*').order('created_at', desc=True).execute()
             orders = res.data or []
-            if orders:
-                return [format_order_dict(o) for o in orders]
+            return [format_order_dict(o) for o in orders]
         except Exception as e:
             logger.error(f"Supabase get_orders error: {e}")
             pass
@@ -855,39 +891,53 @@ def get_stats():
     """Calculate dashboard metrics (products count, orders count, total revenue, quotes count)"""
     if is_supabase_enabled():
         try:
-            # Count products
-            p_res = supabase_client.table('products').select('id', count='exact').execute()
-            total_products = p_res.count if p_res.count is not None else len(p_res.data or [])
-            
-            if total_products > 0:
-                # Count orders and calculate revenue
+            total_products = 0
+            total_orders = 0
+            total_revenue = 0
+            total_quotes = 0
+            total_chats = 0
+            unread_chats = 0
+
+            # 1. Count products
+            try:
+                p_res = supabase_client.table('products').select('id', count='exact').execute()
+                total_products = p_res.count if p_res.count is not None else len(p_res.data or [])
+            except Exception as pe:
+                logger.warning(f"Supabase count products failed: {pe}")
+
+            # 2. Count orders and calculate revenue
+            try:
                 o_res = supabase_client.table('orders').select('total_amount, status').execute()
                 orders = o_res.data or []
                 total_orders = len(orders)
                 total_revenue = sum(o.get('total_amount', 0) for o in orders if o.get('status') != 'cancelled')
+            except Exception as oe:
+                logger.warning(f"Supabase count orders failed: {oe}")
 
-                # Count quotes
+            # 3. Count quotes
+            try:
                 q_res = supabase_client.table('quotes').select('id', count='exact').execute()
                 total_quotes = q_res.count if q_res.count is not None else len(q_res.data or [])
+            except Exception as qe:
+                logger.warning(f"Supabase count quotes failed: {qe}")
 
-                # Count chats
-                try:
-                    c_res = supabase_client.table('chat_sessions').select('unread_count').execute()
-                    sessions = c_res.data or []
-                    total_chats = len(sessions)
-                    unread_chats = sum(1 for s in sessions if (s.get('unread_count') or 0) > 0)
-                except Exception:
-                    total_chats = 0
-                    unread_chats = 0
-                
-                return {
-                    'total_products': total_products,
-                    'total_orders': total_orders,
-                    'total_revenue': total_revenue,
-                    'total_quotes': total_quotes,
-                    'total_chats': total_chats,
-                    'unread_chats': unread_chats
-                }
+            # 4. Count chats
+            try:
+                c_res = supabase_client.table('chat_sessions').select('unread_count').execute()
+                sessions = c_res.data or []
+                total_chats = len(sessions)
+                unread_chats = sum(1 for s in sessions if (s.get('unread_count') or 0) > 0)
+            except Exception:
+                pass
+
+            return {
+                'total_products': total_products,
+                'total_orders': total_orders,
+                'total_revenue': total_revenue,
+                'total_quotes': total_quotes,
+                'total_chats': total_chats,
+                'unread_chats': unread_chats
+            }
         except Exception as e:
             logger.error(f"Supabase get_stats error: {e}")
             pass

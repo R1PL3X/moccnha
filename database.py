@@ -6,6 +6,13 @@ import tempfile
 is_vercel = os.environ.get('VERCEL') == '1' or 'VERCEL' in os.environ
 if is_vercel:
     DB_FILE = os.path.join(tempfile.gettempdir(), 'moho_store.db')
+    repo_db = os.path.join(os.path.dirname(__file__), 'moho_store.db')
+    if os.path.exists(repo_db) and not os.path.exists(DB_FILE):
+        try:
+            import shutil
+            shutil.copyfile(repo_db, DB_FILE)
+        except Exception:
+            pass
 else:
     DB_FILE = os.path.join(os.path.dirname(__file__), 'moho_store.db')
 

@@ -2,12 +2,15 @@ from flask import Flask, render_template, request, jsonify, session
 import random
 import string
 import os
+import logging
+
+logger = logging.getLogger('moho.app')
 
 # Load .env file automatically
 try:
     from dotenv import load_dotenv
     load_dotenv()
-except ImportError:
+except Exception:
     pass
 
 import db_adapter
@@ -15,9 +18,10 @@ import chat_advisor
 from database import init_db
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = BASE_DIR
 static_dir = os.path.join(BASE_DIR, 'public', 'static') if os.path.exists(os.path.join(BASE_DIR, 'public', 'static')) else os.path.join(BASE_DIR, 'static')
 
-from urllib.parse import parse_qs, urlencode
+from urllib.parse import parse_qs, urlencode, unquote
 
 app = Flask(
     __name__,
@@ -58,7 +62,7 @@ class VercelPathFixMiddleware:
                 custom_path = matched.split('?')[0]
 
         if custom_path:
-            environ['PATH_INFO'] = custom_path
+            environ['PATH_INFO'] = unquote(custom_path)
         else:
             path = environ.get('PATH_INFO', '')
             if path in ('/api/index', '/api/index.py'):
@@ -148,6 +152,9 @@ def save_db_config():
     if not ok:
         return jsonify({'success': False, 'error': msg}), 400
 
+    # Save to db_config.json so it syncs across machines and persists
+    db_adapter.save_stored_config({'supabase_url': url, 'supabase_key': key})
+
     # Write to .env file in project directory
     env_path = os.path.join(ROOT_DIR, '.env')
     try:
@@ -228,6 +235,9 @@ def save_gemini_config():
         return jsonify({'success': False, 'error': msg}), 400
 
     chat_advisor.configure_gemini(key)
+
+    # Save to db_config.json so it syncs across machines and persists
+    db_adapter.save_stored_config({'gemini_api_key': key})
 
     # Write to .env file in project directory
     env_path = os.path.join(ROOT_DIR, '.env')

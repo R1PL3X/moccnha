@@ -40,7 +40,15 @@
         <span id="ai-status-pill" class="text-xs px-2.5 py-0.5 rounded-full font-medium hidden"></span>
       </div>
 
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-3">
+        <button 
+          type="button" 
+          onclick="openDbConfigModal('db')" 
+          class="hidden sm:inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-zinc-800 hover:bg-amber-100 dark:hover:bg-zinc-700 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-zinc-700 font-semibold transition" 
+          title="Cấu hình kết nối Supabase Cloud Database để đồng bộ trên mọi máy tính"
+        >
+          <span>☁️ Đồng Bộ Cloud</span>
+        </button>
         <button 
           type="button" 
           onclick="toggleTheme()" 
@@ -61,6 +69,19 @@
       </div>
     </div>
   </header>
+  <!-- SQLITE OFFLINE WARNING BANNER -->
+  <div id="sqlite-warning-banner" class="hidden bg-amber-500/10 border-b border-amber-300/80 dark:border-amber-700/60 px-4 py-2.5 text-xs text-amber-950 dark:text-amber-200">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <span class="text-base">⚠️</span>
+        <span><strong>Đang dùng Database nội bộ (chưa đồng bộ đa thiết bị):</strong> Dữ liệu chỉ lưu trên máy này. Khi chuyển sang máy khác sẽ không thấy các thay đổi.</span>
+      </div>
+      <button type="button" onclick="openDbConfigModal('db')" class="px-3 py-1 bg-amber-800 hover:bg-amber-900 text-white font-bold rounded-lg shadow-xs transition text-xs whitespace-nowrap">
+        🚀 Kết nối Supabase Cloud để đồng bộ
+      </button>
+    </div>
+  </div>
+
 
   <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
     

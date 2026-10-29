@@ -1,3 +1,4 @@
+import os
 import unittest
 import json
 from app import app
@@ -361,6 +362,41 @@ class MohoStoreTestCase(unittest.TestCase):
         self.assertIn('stats', data)
         self.assertGreaterEqual(data['stats']['total_orders'], 5)
         self.assertGreaterEqual(data['stats']['total_products'], 12)
+
+    def test_db_config_saving_and_loading(self):
+        from db_adapter import save_stored_config, load_stored_config, CONFIG_FILE
+        test_cfg = {'test_key': 'test_val'}
+        save_stored_config(test_cfg)
+        loaded = load_stored_config()
+        self.assertEqual(loaded.get('test_key'), 'test_val')
+        if os.path.exists(CONFIG_FILE):
+            os.remove(CONFIG_FILE)
+
+    def test_save_db_config_endpoint_success(self):
+        from unittest.mock import patch
+        with patch('db_adapter.test_and_configure_supabase', return_value=(True, 'Success')):
+            res = self.client.post(
+                '/api/admin/db-config',
+                data=json.dumps({'supabase_url': 'https://mock.supabase.co', 'supabase_key': 'mock_key', 'auto_sync': False}),
+                content_type='application/json'
+            )
+            self.assertEqual(res.status_code, 200)
+            data = json.loads(res.data)
+            self.assertTrue(data.get('success'))
+        from db_adapter import CONFIG_FILE
+        if os.path.exists(CONFIG_FILE):
+            os.remove(CONFIG_FILE)
+        env_file = os.path.join(os.path.dirname(__file__), '.env')
+        if os.path.exists(env_file):
+            try:
+                os.remove(env_file)
+            except Exception:
+                pass
+        import db_adapter
+        db_adapter.SUPABASE_URL = ''
+        db_adapter.SUPABASE_KEY = ''
+        db_adapter._using_supabase = False
+        db_adapter.supabase_client = None
 
 if __name__ == '__main__':
     unittest.main()
