@@ -10,12 +10,19 @@ Yêu cầu:
 import os
 import sys
 import json
+
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
+except Exception:
+    pass
+
 from database import get_db_connection
 
 try:
     from dotenv import load_dotenv
     load_dotenv()
-except ImportError:
+except Exception:
     pass
 
 SUPABASE_URL = (os.environ.get('SUPABASE_URL') or os.environ.get('NEXT_PUBLIC_SUPABASE_URL') or '').strip()
@@ -116,7 +123,7 @@ def run_sync():
     print(f"   ✅ Đã đồng bộ thành công {prod_count}/{len(prods)} sản phẩm lên Supabase!")
 
     # 3. Đồng bộ Users (Admin & Customers)
-    print("\n👤 [3/3] Đang đồng bộ tài khoản người dùng (users)...")
+    print("\n👤 [3/5] Đang đồng bộ tài khoản người dùng (users)...")
     users = conn.execute('SELECT * FROM users').fetchall()
     user_count = 0
     for u in users:
@@ -134,6 +141,52 @@ def run_sync():
         except Exception as e:
             print(f"   ⚠️ Lỗi đồng bộ user {u_dict['email']}: {e}")
     print(f"   ✅ Đã đồng bộ thành công {user_count}/{len(users)} người dùng lên Supabase!")
+
+    # 4. Đồng bộ Đơn Hàng (Orders)
+    print("\n📦 [4/5] Đang đồng bộ đơn đặt hàng (orders)...")
+    orders = conn.execute('SELECT * FROM orders').fetchall()
+    order_count = 0
+    for o in orders:
+        o_dict = dict(o)
+        order_payload = {
+            'customer_name': o_dict['customer_name'],
+            'customer_phone': o_dict.get('customer_phone', ''),
+            'customer_email': o_dict.get('customer_email', ''),
+            'customer_address': o_dict.get('customer_address', ''),
+            'payment_method': o_dict.get('payment_method', 'cod'),
+            'note': o_dict.get('note', ''),
+            'items': parse_json_safely(o_dict.get('items')),
+            'total_amount': o_dict.get('total_amount', 0),
+            'status': o_dict.get('status', 'pending')
+        }
+        try:
+            # Check by customer_phone & total_amount & created_at or insert
+            supabase.table('orders').insert(order_payload).execute()
+            order_count += 1
+        except Exception as e:
+            print(f"   ⚠️ Lỗi đồng bộ order #{o_dict.get('id')}: {e}")
+    print(f"   ✅ Đã đồng bộ thành công {order_count}/{len(orders)} đơn hàng lên Supabase!")
+
+    # 5. Đồng bộ Báo Giá B2B (Quotes)
+    print("\n📄 [5/5] Đang đồng bộ yêu cầu báo giá B2B (quotes)...")
+    quotes = conn.execute('SELECT * FROM quotes').fetchall()
+    quote_count = 0
+    for q in quotes:
+        q_dict = dict(q)
+        quote_payload = {
+            'fullname': q_dict['fullname'],
+            'phone': q_dict.get('phone', ''),
+            'email': q_dict.get('email', ''),
+            'project_type': q_dict.get('project_type', 'Nhà ở dân dụng'),
+            'note': q_dict.get('note', ''),
+            'status': q_dict.get('status', 'pending')
+        }
+        try:
+            supabase.table('quotes').insert(quote_payload).execute()
+            quote_count += 1
+        except Exception as e:
+            print(f"   ⚠️ Lỗi đồng bộ quote #{q_dict.get('id')}: {e}")
+    print(f"   ✅ Đã đồng bộ thành công {quote_count}/{len(quotes)} báo giá lên Supabase!")
 
     conn.close()
 
