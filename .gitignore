@@ -49,3 +49,9 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Uploaded images
+static/uploads/*
+!static/uploads/.gitkeep
+public/static/uploads/*
+!public/static/uploads/.gitkeep
