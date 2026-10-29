@@ -2,9 +2,14 @@
  * Admin Dashboard Logic
  */
 
-let ADMIN_THEME = localStorage.getItem('moho_theme') || 'light';
+let ADMIN_THEME = 'light';
+try {
+  ADMIN_THEME = localStorage.getItem('moho_theme') || 'light';
+} catch (e) {
+  ADMIN_THEME = 'light';
+}
 
-document.addEventListener('DOMContentLoaded', () => {
+function initAdmin() {
   initAdminTheme();
   loadDbStatus();
   loadAiStatus();
@@ -13,7 +18,13 @@ document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('adminOrdersTableBody')) loadAdminOrders();
   if (document.getElementById('adminQuotesTableBody')) loadAdminQuotes();
   if (document.getElementById('adminProductsTableBody')) loadAdminProducts();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAdmin);
+} else {
+  initAdmin();
+}
 
 function initAdminTheme() {
   if (ADMIN_THEME === 'dark') {
